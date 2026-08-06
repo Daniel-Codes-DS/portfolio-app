@@ -1,4 +1,5 @@
 import logging
+import os
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -16,10 +17,27 @@ logger = logging.getLogger(__name__)
 app = FastAPI(title="Portfolio Analysis API")
 
 # CORS - מאפשר ל-Frontend (שרץ על כתובת אחרת) לדבר עם ה-API הזה.
-# בפרודקשן: תחליפו את "*" לכתובת המדויקת של ה-Frontend שלכם (למשל https://your-app.vercel.app)
+#
+# שינוי לעומת הגרסה הקודמת: הוסר allow_origins=["*"] (שהתיר גישה מכל דומיין
+# באינטרנט - לא בטוח בפרודקשן) והוחלף ברשימה מפורשת, הנקראת ממשתנה סביבה
+# ALLOWED_ORIGINS (מחרוזת דומיינים מופרדת בפסיקים, בלי רווחים). כך אפשר
+# לעדכן את רשימת הדומיינים המורשים (למשל אם כתובת ה-Vercel תשתנה, או
+# תתווסף כתובת production נוספת) בלי לגעת בקוד - רק בהגדרות הסביבה של Render.
+#
+# אם ALLOWED_ORIGINS לא מוגדר בכלל (למשל בפיתוח מקומי, לפני שיוצרים .env
+# עם הערך הזה) - נופלים חזרה לברירת מחדל שמכסה רק פיתוח מקומי (localhost)
+# ואת כתובת ה-production הידועה נכון לעכשיו, לא "*".
+_DEFAULT_ALLOWED_ORIGINS = (
+    "http://localhost:5173,"
+    "http://127.0.0.1:5173,"
+    "https://portfolio-app-zeta-peach.vercel.app"
+)
+_allowed_origins_raw = os.environ.get("ALLOWED_ORIGINS", _DEFAULT_ALLOWED_ORIGINS)
+ALLOWED_ORIGINS = [origin.strip() for origin in _allowed_origins_raw.split(",") if origin.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -34,6 +52,7 @@ app.include_router(recommendations.router)
 def startup():
     validate_config()
     logger.info("Portfolio Analysis API started")
+    logger.info("CORS allowed origins: %s", ALLOWED_ORIGINS)
 
 
 @app.exception_handler(Exception)
