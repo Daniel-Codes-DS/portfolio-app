@@ -25,12 +25,19 @@ DISCLAIMER_FOOTER = (
 
 LOGO_PATH = os.environ.get("LOGO_PATH", "")
 
+# שינוי היחיד בקובץ הזה לעומת המקור: הוספת NotoSansHebrew-Regular.ttf לרשימה,
+# *לפני* ה-DejaVu הקיים. DejaVuSans.ttf (הבא ברשימה אחריו) אינו תומך בגליפים
+# עבריים בכלל - הוא נשאר רק כרשת ביטחון אחרונה (עדיף רינדור שגוי-אך-לא-קורס
+# על פני קריסה מוחלטת), אבל בפועל, בתוך ה-container (שמתקין fonts-noto-core -
+# ראו backend/Dockerfile), הנתיב של Noto Sans Hebrew יימצא ראשון ברשימה
+# ויירשם בהצלחה - כך שהעברית תוצג נכון גם בלינוקס, לא רק ב-Windows המקומי.
 _FONT_CANDIDATES = [
     os.environ.get("HEBREW_FONT_PATH", ""),
     r"C:\Windows\Fonts\arial.ttf",
     r"C:\Windows\Fonts\tahoma.ttf",
     r"C:\Windows\Fonts\david.ttf",
-    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",  # לינוקס/שרת - גיבוי
+    "/usr/share/fonts/truetype/noto/NotoSansHebrew-Regular.ttf",  # לינוקס/Docker - תומך עברית באמת
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",  # רשת ביטחון אחרונה - לא תומך עברית, רק מונע קריסה
 ]
 
 _registered_font_name = None
