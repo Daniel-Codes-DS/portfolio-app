@@ -1,13 +1,3 @@
-# Place this file at: .github/workflows/ci.yml  (repo ROOT, not inside portfolio-app/)
-#
-# Roadmap item: 13.1 #2 (CI/CD)
-#
-# ASSUMPTION that needs verifying: this file assumes your repo layout is
-#   <repo root>/portfolio-app/backend/
-#   <repo root>/portfolio-app/frontend/
-# as documented in HANDOVER.md section 2. If your actual folder names differ,
-# update the two `working-directory` / `cache-dependency-path` lines below to match.
-
 name: CI
 
 on:
@@ -36,11 +26,8 @@ jobs:
       - name: Syntax check (compileall)
         run: python -m compileall app -q
 
-     - name: Import check (app must boot without errors)
-        # Mirrors the manual check already used during development
-        # (HANDOVER section 4: "from app.main import app without errors")
-        run: |
-          python -c "from app.main import app; print('app imported successfully')"
+      - name: Import check (app must boot without errors)
+        run: python -c "from app.main import app; print('app imported successfully')"
 
       - name: Run pytest (only if tests exist)
         run: |
@@ -65,8 +52,6 @@ jobs:
           node-version: "20"
 
       - name: Install dependencies
-        # Falls back to `npm install` if there's no package-lock.json yet
-        # (npm ci requires a lockfile).
         run: npm ci || npm install
 
       - name: Build
