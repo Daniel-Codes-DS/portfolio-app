@@ -26,8 +26,8 @@ VALID_CATEGORIES = {
 }
 
 _LANG_INSTRUCTION = {
-    "en": "Write all text fields (summary_text and reasoning) in English.",
-    "he": "כתוב את כל שדות הטקסט (summary_text ו-reasoning) בעברית.",
+    "en": "CRITICAL INSTRUCTION: You MUST write ALL text fields (summary_text and reasoning) entirely in ENGLISH. Do NOT output Hebrew.",
+    "he": "CRITICAL INSTRUCTION: You MUST write ALL text fields (summary_text and reasoning) entirely in HEBREW. Do NOT output English.",
 }
 
 

@@ -41,12 +41,12 @@ _LIQUIDITY_LABEL = {
 # ---------------------------------------------------------------------------
 _LANG_INSTRUCTION = {
     "en": (
-        "IMPORTANT: Write the entire final report in English. "
-        "Use professional financial English, clear section headings, and concise bullet points."
+        "CRITICAL INSTRUCTION: You MUST write the ENTIRE final report in ENGLISH. "
+        "Do NOT output Hebrew. Use professional financial English, clear section headings, and concise bullet points."
     ),
     "he": (
-        "חשוב: כתוב את כל הדוח הסופי בעברית. "
-        "השתמש בעברית פיננסית מקצועית, כותרות ברורות ונקודות תמציתיות."
+        "CRITICAL INSTRUCTION: You MUST write the ENTIRE final report in HEBREW. "
+        "Do NOT output English. Use professional financial Hebrew, clear section headings, and concise bullet points."
     ),
 }
 
@@ -157,8 +157,9 @@ def run_crew_analysis(
     # Agents – all defined in English for best LLM quality
     # ------------------------------------------------------------------
     professional_tone = (
+        "CRITICAL: You MUST write your analysis entirely in ENGLISH. "
         "Write in a professional tone like an analyst report section for a private client: "
-        "concise, factual, third person. Do not open with a personal greeting (e.g. 'Hello', 'I am')."
+        "concise, factual, third person. Do not open with a personal greeting."
     )
 
     portfolio_analyst = Agent(
