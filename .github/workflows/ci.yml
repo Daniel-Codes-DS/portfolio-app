@@ -1,0 +1,72 @@
+# Place this file at: .github/workflows/ci.yml  (repo ROOT, not inside portfolio-app/)
+#
+# Roadmap item: 13.1 #2 (CI/CD)
+#
+# ASSUMPTION that needs verifying: this file assumes your repo layout is
+#   <repo root>/portfolio-app/backend/
+#   <repo root>/portfolio-app/frontend/
+# as documented in HANDOVER.md section 2. If your actual folder names differ,
+# update the two `working-directory` / `cache-dependency-path` lines below to match.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    name: Backend - syntax & import check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: portfolio-app/backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Syntax check (compileall)
+        run: python -m compileall app -q
+
+      - name: Import check (app must boot without errors)
+        # Mirrors the manual check already used during development
+        # (HANDOVER section 4: "from app.main import app without errors")
+        run: python -c "from app.main import app; print('OK: app imports successfully')"
+
+      - name: Run pytest (only if tests exist)
+        run: |
+          if [ -d tests ] || compgen -G "test_*.py" > /dev/null || compgen -G "*_test.py" > /dev/null; then
+            pip install pytest
+            pytest -q
+          else
+            echo "No pytest test files found - skipping (this is fine, not a failure)."
+          fi
+
+  frontend:
+    name: Frontend - build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: portfolio-app/frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        # Falls back to `npm install` if there's no package-lock.json yet
+        # (npm ci requires a lockfile).
+        run: npm ci || npm install
+
+      - name: Build
+        run: npm run build

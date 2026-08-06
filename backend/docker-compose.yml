@@ -1,0 +1,20 @@
+# Optional - place this file at: portfolio-app/backend/docker-compose.yml
+# Convenience for local testing only. Not required for Render deployment
+# (Render builds the Dockerfile directly, it does not use docker-compose).
+#
+# Usage:
+#   1. Make sure a real .env file exists in this same folder (backend/.env) -
+#      it is NOT copied into the image (see .dockerignore), it's only mounted
+#      at runtime by the `env_file` line below.
+#   2. Run: docker compose up --build
+#   3. Test:  curl http://localhost:8000/health
+
+services:
+  backend:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - PORT=8000

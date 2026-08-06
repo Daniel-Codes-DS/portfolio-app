@@ -1,0 +1,17 @@
+fastapi
+uvicorn[standard]
+python-multipart
+supabase
+pyjwt
+python-dotenv
+crewai
+crewai-tools
+yfinance
+pandas
+numpy
+openpyxl
+google-genai
+matplotlib
+markdown
+reportlab
+python-bidi
