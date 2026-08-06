@@ -11,7 +11,7 @@ async function request(path, { method = "GET", token, body, isFormData = false }
   if (token) headers["Authorization"] = `Bearer ${token}`;
   if (!isFormData) headers["Content-Type"] = "application/json";
   // Tell the backend which language to use for AI output and error messages
-  headers["Accept-Language"] = getLang();
+  headers["X-App-Language"] = getLang();
 
   const res = await fetch(`${API_BASE}${path}`, {
     method,

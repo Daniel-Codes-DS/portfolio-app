@@ -25,12 +25,11 @@ _RATE_LIMIT_KEY          = "analysis"
 
 def _get_language(request: Request) -> str:
     """
-    Read Accept-Language from the request header.
-    Accepts 'he' or 'en' (or 'he-IL', 'en-US' etc.).
-    Defaults to 'en'.
+    Read X-App-Language from the request header (set by our frontend).
+    Defaults to 'en' if not provided.
     """
-    header = request.headers.get("accept-language", "en")
-    lang   = header.split(",")[0].split("-")[0].strip().lower()
+    header = request.headers.get("x-app-language", "en")
+    lang   = header.strip().lower()
     return lang if lang in ("en", "he") else "en"
 
 

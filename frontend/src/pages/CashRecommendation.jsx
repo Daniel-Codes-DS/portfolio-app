@@ -46,7 +46,7 @@ export default function CashRecommendation({ token, portfolioId = null, initialP
         headers: {
           "Content-Type":    "application/json",
           "Authorization":   `Bearer ${token}`,
-          "Accept-Language": localStorage.getItem("portfolio_app_lang") || "en",
+          "X-App-Language":  localStorage.getItem("portfolio_app_lang") || "en",
         },
         body: JSON.stringify(payload),
       });

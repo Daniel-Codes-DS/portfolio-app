@@ -17,8 +17,8 @@ _RATE_LIMIT_KEY          = "cash_rec"
 
 
 def _get_language(request: Request) -> str:
-    header = request.headers.get("accept-language", "en")
-    lang   = header.split(",")[0].split("-")[0].strip().lower()
+    header = request.headers.get("x-app-language", "en")
+    lang   = header.strip().lower()
     return lang if lang in ("en", "he") else "en"
 
 
