@@ -59,7 +59,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
         )
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="שירות האימות אינו זמין כרגע, נסו שוב בעוד רגע",
+            detail="Authentication service unavailable, please try again in a moment",
         )
 
     except Exception as e:
@@ -67,7 +67,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
         logger.error("Supabase auth.get_user failed: %s", e)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="שירות האימות אינו זמין כרגע, נסו שוב בעוד רגע",
+            detail="Authentication service unavailable, please try again in a moment",
         )
 
     # שלב 2: בדיקת תקינות הטוקן עצמו - בכוונה מחוץ ל-try כדי שלא ייתפס

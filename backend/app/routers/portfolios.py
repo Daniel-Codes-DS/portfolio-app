@@ -17,7 +17,7 @@ MAX_UPLOAD_ROWS = 2000
 def _get_owned_portfolio(supabase, portfolio_id, user_id):
     resp = supabase.table("portfolios").select("*").eq("id", portfolio_id).eq("user_id", user_id).execute()
     if not resp.data:
-        raise HTTPException(404, "תיק לא נמצא")
+        raise HTTPException(404, "Portfolio not found")
     return resp.data[0]
 
 
@@ -68,7 +68,7 @@ def update_portfolio(portfolio_id: str, payload: PortfolioUpdate, user=Depends(g
     # model_dump עם exclude_none=True - שולח רק שדות שהמשתמש מילא בפועל
     update_data = payload.model_dump(exclude_none=True)
     if not update_data:
-        raise HTTPException(400, "לא סופקו שדות לעדכון")
+        raise HTTPException(400, "No fields provided for update")
 
     resp = supabase.table("portfolios").update(update_data).eq("id", portfolio_id).execute()
     return resp.data[0]
@@ -115,15 +115,15 @@ async def upload_portfolio_file(portfolio_id: str, file: UploadFile = File(...),
         )
         raise HTTPException(
             400,
-            f"הקובץ גדול מדי ({len(content) / (1024*1024):.1f}MB) - "
-            f"הגודל המקסימלי המותר הוא {MAX_UPLOAD_SIZE_BYTES // (1024*1024)}MB",
+            f"File too large ({len(content) / (1024*1024):.1f} MB) – "
+            f"maximum allowed size is {MAX_UPLOAD_SIZE_BYTES // (1024*1024)} MB",
         )
 
     try:
         df, diagnostics = load_portfolio_file(file.filename, content)
     except Exception as e:
         logger.warning("Failed to parse uploaded file '%s' for portfolio %s: %s", file.filename, portfolio_id, e)
-        raise HTTPException(400, f"שגיאה בקריאת הקובץ: {e}")
+        raise HTTPException(400, f"Failed to parse uploaded file: {e}")
 
     # בדיקת מספר שורות - אחרי הפרסור (כי רק אז יודעים כמה שורות תקינות יש בפועל),
     # אבל לפני ה-insert ל-DB, כדי לא ליצור insert ענק שיכביד על הבקשה ל-Supabase.
@@ -133,7 +133,7 @@ async def upload_portfolio_file(portfolio_id: str, file: UploadFile = File(...),
         )
         raise HTTPException(
             400,
-            f"הקובץ מכיל {len(df)} שורות תקינות - המקסימום המותר הוא {MAX_UPLOAD_ROWS}",
+            f"File contains {len(df)} valid rows – maximum allowed is {MAX_UPLOAD_ROWS}",
         )
 
     def _clean_value(v):

@@ -125,7 +125,7 @@ def _check_redis(r, user_id: str, key: str, max_per_hour: int, min_seconds_betwe
                 )
                 raise HTTPException(
                     429,
-                    f"יש להמתין לפחות {int(remaining) + 1} שניות בין בקשות",
+                    f"Please wait at least {int(remaining) + 1} seconds between requests",
                 )
 
         # בדיקת מגבלה שעתית
@@ -137,7 +137,7 @@ def _check_redis(r, user_id: str, key: str, max_per_hour: int, min_seconds_betwe
             )
             raise HTTPException(
                 429,
-                f"הגעת למגבלת {max_per_hour} בקשות לשעה - נסה שוב מאוחר יותר",
+                f"You have reached the limit of {max_per_hour} requests per hour - please try again later",
             )
 
         # רישום: עדכון cooldown + הגדלת מונה שעתי (pipeline = atomically)
@@ -181,7 +181,7 @@ def _check_memory(user_id: str, key: str, max_per_hour: int, min_seconds_between
         )
         raise HTTPException(
             429,
-            f"יש להמתין לפחות {int(remaining) + 1} שניות בין בקשות",
+            f"Please wait at least {int(remaining) + 1} seconds between requests",
         )
 
     # בדיקת מגבלה שעתית
@@ -192,7 +192,7 @@ def _check_memory(user_id: str, key: str, max_per_hour: int, min_seconds_between
         )
         raise HTTPException(
             429,
-            f"הגעת למגבלת {max_per_hour} בקשות לשעה - נסה שוב מאוחר יותר",
+            f"You have reached the limit of {max_per_hour} requests per hour - please try again later",
         )
 
     # רישום
