@@ -1,3 +1,4 @@
+import concurrent.futures
 import hashlib
 import logging
 import time
@@ -16,6 +17,17 @@ security = HTTPBearer()
 _TOKEN_CACHE: dict[str, dict] = {}
 _CACHE_TTL_SECONDS = 60
 
+# timeout מפורש על קריאת get_user ל-Supabase. בלי זה, אם Supabase לא עונה
+# כלל, הבקשה תיתקע עד ל-TCP timeout של מערכת ההפעלה (דקות) - זה בלתי-קביל.
+# 10 שניות: מספיק לבקשה רשת תקינה (בד"כ < 500ms), אבל לא ממתינים לנצח.
+_AUTH_TIMEOUT_SECONDS = 10
+
+# ThreadPoolExecutor קבוע - ניצור thread יחיד לכל בקשת auth ונבדוק timeout.
+# max_workers=4 מספיק לעומס הצפוי (free tier עם עד ~100 משתמשים).
+_auth_executor = concurrent.futures.ThreadPoolExecutor(
+    max_workers=4, thread_name_prefix="supabase-auth"
+)
+
 
 def _token_cache_key(token: str) -> str:
     # שומרים hash של הטוקן, לא את הטוקן עצמו, כדי לא להחזיק bearer token
@@ -27,27 +39,39 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
     token = credentials.credentials
     cache_key = _token_cache_key(token)
 
+    # בדיקת מטמון - אם הטוקן אומת לאחרונה בפחות מ-60 שניות, אין צורך ב-round-trip
     cached = _TOKEN_CACHE.get(cache_key)
     if cached and (time.time() - cached["cached_at"]) < _CACHE_TTL_SECONDS:
         return cached["user"]
 
     supabase = get_supabase()
 
+    # שלב 1: קריאת get_user ב-thread נפרד עם timeout מפורש.
+    # future.result(timeout=N) זורק concurrent.futures.TimeoutError אם עברו N שניות.
     try:
-        user_response = supabase.auth.get_user(token)
+        future = _auth_executor.submit(supabase.auth.get_user, token)
+        user_response = future.result(timeout=_AUTH_TIMEOUT_SECONDS)
+
+    except concurrent.futures.TimeoutError:
+        # Supabase לא ענה תוך 10 שניות - בעיית זמינות, לא בעיית טוקן
+        logger.error(
+            "Supabase auth.get_user timed out after %ss", _AUTH_TIMEOUT_SECONDS
+        )
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="שירות האימות אינו זמין כרגע, נסו שוב בעוד רגע",
+        )
+
     except Exception as e:
-        # כשל רשת/timeout מול Supabase עצמו - זו לא בעיה עם הטוקן, זו זמינות
-        # של שירות חיצוני. מחזירים 503 (לא 401) כדי לא להטעות את המשתמש
-        # ("תתנתק ותתחבר מחדש" הוא הפתרון הלא-נכון פה), ולא חושפים את str(e)
-        # הגולמי ללקוח - רק ללוג שלנו.
+        # כשל רשת/connection error אחר - אותו טיפול: 503 לא 401
         logger.error("Supabase auth.get_user failed: %s", e)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="שירות האימות אינו זמין כרגע, נסו שוב בעוד רגע",
         )
 
-    # בכוונה מחוץ ל-try - כדי שלא ייתפס ע"י ה-except הכללי מעל ותאבד
-    # ההודעה המדויקת "Invalid token or expired session".
+    # שלב 2: בדיקת תקינות הטוקן עצמו - בכוונה מחוץ ל-try כדי שלא ייתפס
+    # ע"י ה-except הכללי ותאבד ההודעה המדויקת "Invalid token or expired session".
     if not user_response or not user_response.user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

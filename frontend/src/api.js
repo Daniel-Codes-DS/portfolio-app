@@ -1,9 +1,17 @@
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 
+// getLang() reads the current language from localStorage (set by LangContext).
+// We read it at call-time (not module load) so it reflects the user's current choice.
+function getLang() {
+  return localStorage.getItem("portfolio_app_lang") || "en";
+}
+
 async function request(path, { method = "GET", token, body, isFormData = false } = {}) {
   const headers = {};
   if (token) headers["Authorization"] = `Bearer ${token}`;
   if (!isFormData) headers["Content-Type"] = "application/json";
+  // Tell the backend which language to use for AI output and error messages
+  headers["Accept-Language"] = getLang();
 
   const res = await fetch(`${API_BASE}${path}`, {
     method,
@@ -27,13 +35,9 @@ async function request(path, { method = "GET", token, body, isFormData = false }
 export const api = {
   listPortfolios: (token) => request("/portfolios", { token }),
 
-  // payload = { name, holdings?, investor_age?, investment_horizon_years?,
-  //             risk_tolerance?, investment_goal?, liquidity_needs? }
-  // Dashboard.jsx כבר מכין את ה-payload הנכון - כאן פשוט מעבירים הלאה
   createPortfolio: (token, payload) =>
     request("/portfolios", { method: "POST", token, body: { holdings: [], ...payload } }),
 
-  // עדכון פרופיל תיק קיים (PATCH - partial update, רק שדות שסופקו)
   updatePortfolio: (token, id, payload) =>
     request(`/portfolios/${id}`, { method: "PATCH", token, body: payload }),
 
@@ -51,9 +55,9 @@ export const api = {
   },
 
   runAnalysis: (token, id) => request(`/portfolios/${id}/analysis`, { method: "POST", token }),
-  getHistory: (token, id) => request(`/portfolios/${id}/analysis`, { token }),
+  getHistory:  (token, id) => request(`/portfolios/${id}/analysis`, { token }),
   getAnalysis: (token, portfolioId, analysisId) =>
     request(`/portfolios/${portfolioId}/analysis/${analysisId}`, { token }),
-  getPdfUrl: (token, portfolioId, analysisId) =>
+  getPdfUrl:   (token, portfolioId, analysisId) =>
     request(`/portfolios/${portfolioId}/analysis/${analysisId}/pdf-url`, { token }),
 };

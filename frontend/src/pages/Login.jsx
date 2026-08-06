@@ -1,19 +1,19 @@
 import { useState } from "react";
 import { supabase } from "../supabaseClient";
+import { useLang } from "../i18n/LangContext";
 
 export default function Login() {
-  const [email, setEmail] = useState("");
+  const { t } = useLang();
+  const [email, setEmail]     = useState("");
   const [password, setPassword] = useState("");
-  const [mode, setMode] = useState("login"); // "login" | "signup"
-  const [error, setError] = useState("");
-  const [info, setInfo] = useState("");
+  const [mode, setMode]       = useState("login");
+  const [error, setError]     = useState("");
+  const [info, setInfo]       = useState("");
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
-    setError("");
-    setInfo("");
-    setLoading(true);
+    setError(""); setInfo(""); setLoading(true);
 
     const { data, error: authError } =
       mode === "login"
@@ -21,24 +21,21 @@ export default function Login() {
         : await supabase.auth.signUp({ email, password });
 
     setLoading(false);
-
-    if (authError) {
-      setError(authError.message);
-      return;
-    }
-
+    if (authError) { setError(authError.message); return; }
     if (mode === "signup" && !data.session) {
-      setInfo("נשלח מייל אימות - בדקו את תיבת הדואר שלכם ואז התחברו.");
+      setInfo(t("login.emailSent"));
     }
   }
 
   return (
     <div className="center-screen">
       <form className="card auth-card" onSubmit={handleSubmit}>
-        <h1>ניתוח תיק השקעות</h1>
-        <p className="subtitle">{mode === "login" ? "התחברות" : "הרשמה"}</p>
+        <h1>{t("login.title")}</h1>
+        <p className="subtitle">
+          {mode === "login" ? t("login.subtitle_login") : t("login.subtitle_signup")}
+        </p>
 
-        <label htmlFor="email">אימייל</label>
+        <label htmlFor="email">{t("login.email")}</label>
         <input
           id="email"
           type="email"
@@ -48,7 +45,7 @@ export default function Login() {
           autoComplete="email"
         />
 
-        <label htmlFor="password">סיסמה</label>
+        <label htmlFor="password">{t("login.password")}</label>
         <input
           id="password"
           type="password"
@@ -60,22 +57,22 @@ export default function Login() {
         />
 
         {error && <p className="error">{error}</p>}
-        {info && <p className="info">{info}</p>}
+        {info  && <p className="info">{info}</p>}
 
         <button type="submit" disabled={loading}>
-          {loading ? "רגע..." : mode === "login" ? "התחבר" : "הרשם"}
+          {loading
+            ? t("login.loading")
+            : mode === "login"
+            ? t("login.submit_login")
+            : t("login.submit_signup")}
         </button>
 
         <button
           type="button"
           className="link-button"
-          onClick={() => {
-            setMode(mode === "login" ? "signup" : "login");
-            setError("");
-            setInfo("");
-          }}
+          onClick={() => { setMode(mode === "login" ? "signup" : "login"); setError(""); setInfo(""); }}
         >
-          {mode === "login" ? "אין לך חשבון? הרשם" : "כבר יש לך חשבון? התחבר"}
+          {mode === "login" ? t("login.switchToSignup") : t("login.switchToLogin")}
         </button>
       </form>
     </div>

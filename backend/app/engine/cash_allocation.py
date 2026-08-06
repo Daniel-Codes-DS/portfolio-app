@@ -1,7 +1,7 @@
 """
-מנוע המלצת פיזור מזומן חדש.
-ה-LLM מציע אחוזים (%) בלבד עם נימוק טקסטואלי,
-ו-Python מחשב את הסכומים בש"ח ומוודא שהסכום מסתכמים ל-100%.
+Cash allocation recommendation engine.
+All internal prompts are in English for AI quality.
+Output language (summary_text, reasoning) is controlled by the `language` parameter.
 """
 
 import json
@@ -13,18 +13,27 @@ from app.config import PRIMARY_MODEL, FALLBACK_MODEL
 
 logger = logging.getLogger(__name__)
 
-# קטגוריות מותרות כברירת מחדל
+# ---------------------------------------------------------------------------
+# Asset category definitions (internal key → display label per language)
+# ---------------------------------------------------------------------------
 VALID_CATEGORIES = {
-    "equity_index": "מדדי מניות",
-    "individual_stocks": "מניות בודדות",
-    "bonds_government": "אג'ח ממשלתי",
-    "bonds_corporate": "אג'ח קונצרני",
-    "reit": "נדל\"ן / REIT",
-    "cash_deposit": "מזומן / פיקדון"
+    "equity_index":      {"en": "Equity Index Funds",    "he": "מדדי מניות"},
+    "individual_stocks": {"en": "Individual Stocks",     "he": "מניות בודדות"},
+    "bonds_government":  {"en": "Government Bonds",      "he": "אג'ח ממשלתי"},
+    "bonds_corporate":   {"en": "Corporate Bonds",       "he": "אג'ח קונצרני"},
+    "reit":              {"en": "Real Estate / REITs",   "he": "נדל\"ן / REIT"},
+    "cash_deposit":      {"en": "Cash / Deposits",       "he": "מזומן / פיקדון"},
 }
+
+_LANG_INSTRUCTION = {
+    "en": "Write all text fields (summary_text and reasoning) in English.",
+    "he": "כתוב את כל שדות הטקסט (summary_text ו-reasoning) בעברית.",
+}
+
 
 def _build_llm(model_name: str) -> LLM:
     return LLM(model=model_name, temperature=0.3)
+
 
 def recommend_cash_allocation(
     cash_amount: float,
@@ -33,87 +42,88 @@ def recommend_cash_allocation(
     risk_tolerance: Optional[str] = None,
     investment_goal: Optional[str] = None,
     liquidity_needs: Optional[str] = None,
-    existing_holdings: Optional[List[Dict]] = None
+    existing_holdings: Optional[List[Dict]] = None,
+    language: str = "en",
 ) -> dict:
     if cash_amount <= 0:
-        raise ValueError("סכום המזומן חייב להיות גדול מ-0")
+        raise ValueError("cash_amount must be greater than 0")
 
+    lang_instruction = _LANG_INSTRUCTION.get(language, _LANG_INSTRUCTION["en"])
+
+    # Build investor profile context (English)
     profile_lines = []
-    if investor_age is not None:
-        profile_lines.append(f"- גיל: {investor_age}")
-    if investment_horizon_years is not None:
-        profile_lines.append(f"- אופק השקעה: {investment_horizon_years} שנים")
-    if risk_tolerance:
-        profile_lines.append(f"- סיכון: {risk_tolerance}")
-    if investment_goal:
-        profile_lines.append(f"- מטרה: {investment_goal}")
-    if liquidity_needs:
-        profile_lines.append(f"- נזילות: {liquidity_needs}")
+    if investor_age             is not None: profile_lines.append(f"- Age: {investor_age}")
+    if investment_horizon_years is not None: profile_lines.append(f"- Investment horizon: {investment_horizon_years} years")
+    if risk_tolerance:                        profile_lines.append(f"- Risk tolerance: {risk_tolerance}")
+    if investment_goal:                       profile_lines.append(f"- Investment goal: {investment_goal}")
+    if liquidity_needs:                       profile_lines.append(f"- Liquidity needs: {liquidity_needs}")
 
-    if profile_lines:
-        profile_context = "\n".join(profile_lines)
-    else:
-        profile_context = "לא סופק פרופיל משקיע."
+    profile_context = "\n".join(profile_lines) if profile_lines else "No investor profile provided."
 
-    if existing_holdings:
-        holdings_json = json.dumps(existing_holdings, ensure_ascii=False, indent=2)
-        holdings_context = f"אחזקות קיימות בתיק למניעת ריכוזיות יתר:\n{holdings_json}"
-    else:
-        holdings_context = "אין תיק קיים (המלצה בוואקום)."
+    holdings_context = (
+        f"Existing portfolio holdings (avoid over-concentration):\n"
+        + json.dumps(existing_holdings, ensure_ascii=False, indent=2)
+        if existing_holdings
+        else "No existing portfolio (recommendation in isolation)."
+    )
 
-    categories_list_str = "\n".join([f"- `{k}` ({v})" for k, v in VALID_CATEGORIES.items()])
+    # Show category keys + English label in the prompt (AI understands English best)
+    categories_list_str = "\n".join(
+        [f"- `{k}` ({v['en']})" for k, v in VALID_CATEGORIES.items()]
+    )
 
     llm = _build_llm(PRIMARY_MODEL)
 
     asset_allocator = Agent(
-        role="מומחה הקצאת נכסים ופיזור מזומן",
-        goal="להמליץ על פיזור אופטימלי של מזומן חדש לפי קטגוריות נכסים",
-        backstory="אנליסט בכיר המתמחה בהקצאת נכסים (Asset Allocation) ובבניית תיקי השקעות מותאמים אישית.",
-        llm=llm
+        role="Asset Allocation Specialist",
+        goal="Recommend an optimal allocation of new cash across asset categories",
+        backstory=(
+            "Senior analyst specialising in asset allocation and building personalised portfolios. "
+            "Expert in balancing risk, return, and liquidity based on investor profiles."
+        ),
+        llm=llm,
     )
 
     prompt_description = f"""
-אתה נדרש להמליץ על פיזור סכום מזומן חדש בסך {cash_amount:,.2f} ש"ח.
+You must recommend how to allocate a new cash amount of {cash_amount:,.2f} across asset categories.
 
-### קטגוריות מותרות לשימוש בלבד:
+### Allowed categories only:
 {categories_list_str}
 
-### פרופיל המשקיע:
+### Investor profile:
 {profile_context}
 
-### הקשר התיק הקיים:
+### Existing portfolio context:
 {holdings_context}
 
-### הנחיות קריטיות:
-1. החזר אך ורק אובייקט JSON תקין, ללא markdown fences (ללא ```json).
-2. אל תשתמש בגרשיים כפולות (") בתוך הטקסט של הנימוקים בעברית - השתמש בגרש בודד (') עבור ראשי תיבות או מילים (למשל: אג'ח ולא אג"ח), כדי לא לשבור את מבנה ה-JSON.
-3. קבע לכל קטגוריה שאתה ממליץ עליה אחוז (percentage) בין 0 ל-100.
-4. סכום האחוזים של כל הקטגוריות המוצעות חייב להיות בדיוק 100.
-5. רשום לכל קטגוריה נימוק קצר (reasoning) של 2-3 משפטים בעברית מקצועית.
-6. צרף בשדה `summary_text` סיכום אסטרטגי כללי קצר (3-4 משפטים).
+### Language instruction:
+{lang_instruction}
 
-פורמט JSON מבוקש:
+### Critical rules:
+1. Return ONLY a valid JSON object – no markdown fences (no ```json).
+2. Do NOT use double-quotes (") inside text values – use a single-quote (') for abbreviations to avoid breaking JSON.
+3. Assign a percentage (0–100) to each recommended category.
+4. All percentages must sum to exactly 100.
+5. Write a short reasoning (2-3 sentences) for each category using the language instruction above.
+6. Include a `summary_text` field: a 3-4 sentence strategic overview.
+
+Required JSON format:
 {{
-  "summary_text": "סיכום אסטרטגי...",
+  "summary_text": "Strategic overview...",
   "allocation": [
-    {{"category": "equity_index", "percentage": 40.0, "reasoning": "נימוק..."}},
-    {{"category": "bonds_government", "percentage": 60.0, "reasoning": "נימוק..."}}
+    {{"category": "equity_index",    "percentage": 40.0, "reasoning": "..."}},
+    {{"category": "bonds_government","percentage": 60.0, "reasoning": "..."}}
   ]
 }}
 """
 
     task = Task(
         description=prompt_description,
-        expected_output="אובייקט JSON בלבד בפורמט הנדרש",
-        agent=asset_allocator
+        expected_output="JSON object only in the required format",
+        agent=asset_allocator,
     )
 
-    crew = Crew(
-        agents=[asset_allocator],
-        tasks=[task],
-        process=Process.sequential,
-        verbose=False
-    )
+    crew = Crew(agents=[asset_allocator], tasks=[task], process=Process.sequential, verbose=False)
 
     try:
         crew.kickoff()
@@ -124,13 +134,13 @@ def recommend_cash_allocation(
         crew.kickoff()
         raw_output = task.output.raw
 
-    return _parse_and_calculate_allocation(raw_output, cash_amount)
+    return _parse_and_calculate_allocation(raw_output, cash_amount, language)
 
 
-def _parse_and_calculate_allocation(raw_text: str, cash_amount: float) -> dict:
+def _parse_and_calculate_allocation(raw_text: str, cash_amount: float, language: str = "en") -> dict:
     text = raw_text.strip()
-    
-    # ניקוי מעטפת markdown אם קיימת
+
+    # Strip markdown fences if present
     if text.startswith("```"):
         lines = text.splitlines()
         if lines[0].startswith("```"):
@@ -139,60 +149,59 @@ def _parse_and_calculate_allocation(raw_text: str, cash_amount: float) -> dict:
             lines = lines[:-1]
         text = "\n".join(lines).strip()
 
-    # חילוץ ממוקד של בלוק ה-JSON מתוך הטקסט
+    # Extract outermost JSON object
     start_idx = text.find("{")
-    end_idx = text.rfind("}")
+    end_idx   = text.rfind("}")
     if start_idx != -1 and end_idx != -1:
-        text = text[start_idx:end_idx + 1]
+        text = text[start_idx : end_idx + 1]
 
-    # ניסיון פרסור JSON עם טיפול במקרי קיצון של גרשיים כפולות בטקסט עברי
     try:
         data = json.loads(text)
     except json.JSONDecodeError:
         try:
-            # תיקון אוטומטי של גרשיים כפולות פנימיות בתוך מילים בעברית
-            fixed_text = re.sub(r'(?<=[\u0590-\u05FF])"(?=[\u0590-\u05FF])', "'", text)
+            # Auto-fix internal double-quotes inside Hebrew/Latin words
+            fixed_text = re.sub(r'(?<=[^\s{[:,\[])\"(?=[^\s}:,\]])', "'", text)
             data = json.loads(fixed_text)
         except json.JSONDecodeError as err:
-            logger.error(f"Failed to parse LLM JSON response. Raw output:\n{raw_text}")
-            raise ValueError(f"פורמט JSON לא תקין שהתקבל מה-AI: {err}")
+            logger.error(f"Failed to parse LLM JSON. Raw output:\n{raw_text}")
+            raise ValueError(f"Invalid JSON format received from AI: {err}")
 
     raw_allocation = data.get("allocation", [])
-    summary_text = data.get("summary_text", "המלצת פיזור מזומן מותאמת אישית.")
+    default_summary = "Personalised cash allocation recommendation." if language == "en" \
+                      else "המלצת פיזור מזומן מותאמת אישית."
+    summary_text   = data.get("summary_text", default_summary)
 
     if not raw_allocation:
-        raise ValueError("ה-LLM לא החזיר קטגוריות פיזור")
+        raise ValueError("LLM returned no allocation categories")
 
-    valid_items = []
-    for item in raw_allocation:
-        cat = item.get("category")
-        pct = float(item.get("percentage", 0))
-        reasoning = item.get("reasoning", "")
-        if cat in VALID_CATEGORIES and pct > 0:
-            valid_items.append({"category": cat, "percentage": pct, "reasoning": reasoning})
+    valid_items = [
+        {"category": item["category"], "percentage": float(item.get("percentage", 0)),
+         "reasoning": item.get("reasoning", "")}
+        for item in raw_allocation
+        if item.get("category") in VALID_CATEGORIES and float(item.get("percentage", 0)) > 0
+    ]
 
     if not valid_items:
-        raise ValueError("לא נותרו קטגוריות תקינות בפיזור")
+        raise ValueError("No valid allocation categories remain after filtering")
 
-    total_pct = sum(item["percentage"] for item in valid_items)
+    total_pct = sum(i["percentage"] for i in valid_items)
     if abs(total_pct - 100.0) > 15.0:
-        raise ValueError(f"סטיית אחוזים גדולה מדי מתקבלת מה-LLM: {total_pct}%")
+        raise ValueError(f"LLM allocation percentages deviate too much from 100%: {total_pct}%")
 
-    processed_allocation = []
-    for item in valid_items:
-        normalized_pct = round((item["percentage"] / total_pct) * 100, 2)
-        amount_ils = round((normalized_pct / 100.0) * cash_amount, 2)
-        
-        processed_allocation.append({
-            "category": item["category"],
-            "category_label": VALID_CATEGORIES[item["category"]],
-            "percentage": normalized_pct,
-            "amount": amount_ils,
-            "reasoning": item["reasoning"]
-        })
+    processed_allocation = [
+        {
+            "category":       item["category"],
+            # category_label in the requested display language
+            "category_label": VALID_CATEGORIES[item["category"]].get(language, VALID_CATEGORIES[item["category"]]["en"]),
+            "percentage":     round((item["percentage"] / total_pct) * 100, 2),
+            "amount":         round(((item["percentage"] / total_pct) * cash_amount), 2),
+            "reasoning":      item["reasoning"],
+        }
+        for item in valid_items
+    ]
 
     return {
-        "cash_amount": cash_amount,
+        "cash_amount":  cash_amount,
         "summary_text": summary_text,
-        "allocation": processed_allocation
+        "allocation":   processed_allocation,
     }

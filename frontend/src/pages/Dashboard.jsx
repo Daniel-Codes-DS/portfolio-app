@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import { supabase } from "../supabaseClient";
-import ButtonGroup from '../components/ButtonGroup';
+import ButtonGroup from "../components/ButtonGroup";
+import { useLang } from "../i18n/LangContext";
 
 const EMPTY_PROFILE = {
   investor_age: "",
@@ -12,13 +13,14 @@ const EMPTY_PROFILE = {
 };
 
 export default function Dashboard({ token, onSelectPortfolio }) {
+  const { t } = useLang();
   const [portfolios, setPortfolios] = useState([]);
-  const [newName, setNewName] = useState("");
-  const [profile, setProfile] = useState(EMPTY_PROFILE);
+  const [newName, setNewName]       = useState("");
+  const [profile, setProfile]       = useState(EMPTY_PROFILE);
   const [showProfile, setShowProfile] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [creating, setCreating] = useState(false);
-  const [error, setError] = useState("");
+  const [loading, setLoading]       = useState(true);
+  const [creating, setCreating]     = useState(false);
+  const [error, setError]           = useState("");
 
   useEffect(() => {
     load();
@@ -26,16 +28,10 @@ export default function Dashboard({ token, onSelectPortfolio }) {
   }, []);
 
   async function load() {
-    setLoading(true);
-    setError("");
-    try {
-      const data = await api.listPortfolios(token);
-      setPortfolios(data);
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
-    }
+    setLoading(true); setError("");
+    try { setPortfolios(await api.listPortfolios(token)); }
+    catch (e) { setError(e.message); }
+    finally { setLoading(false); }
   }
 
   function handleProfileChange(field, value) {
@@ -43,104 +39,82 @@ export default function Dashboard({ token, onSelectPortfolio }) {
   }
 
   function buildPayload() {
-    // שולחים רק שדות שמולאו בפועל - שדות ריקים נשלחים כ-null (לא כמחרוזת ריקה)
     const payload = { name: newName.trim() };
     if (profile.investor_age !== "") {
       const age = parseInt(profile.investor_age, 10);
       if (!isNaN(age) && age > 0) payload.investor_age = age;
     }
     if (profile.investment_horizon_years !== "") {
-      const horizon = parseInt(profile.investment_horizon_years, 10);
-      if (!isNaN(horizon) && horizon >= 0) payload.investment_horizon_years = horizon;
+      const h = parseInt(profile.investment_horizon_years, 10);
+      if (!isNaN(h) && h >= 0) payload.investment_horizon_years = h;
     }
-    if (profile.risk_tolerance !== "") payload.risk_tolerance = profile.risk_tolerance;
-    if (profile.investment_goal !== "") payload.investment_goal = profile.investment_goal;
-    if (profile.liquidity_needs !== "") payload.liquidity_needs = profile.liquidity_needs;
+    if (profile.risk_tolerance !== "")           payload.risk_tolerance = profile.risk_tolerance;
+    if (profile.investment_goal !== "")          payload.investment_goal = profile.investment_goal;
+    if (profile.liquidity_needs !== "")          payload.liquidity_needs = profile.liquidity_needs;
     return payload;
   }
 
   async function handleCreate(e) {
     e.preventDefault();
     if (!newName.trim()) return;
-    setCreating(true);
-    setError("");
+    setCreating(true); setError("");
     try {
       await api.createPortfolio(token, buildPayload());
-      setNewName("");
-      setProfile(EMPTY_PROFILE);
-      setShowProfile(false);
+      setNewName(""); setProfile(EMPTY_PROFILE); setShowProfile(false);
       await load();
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setCreating(false);
-    }
+    } catch (e) { setError(e.message); }
+    finally { setCreating(false); }
   }
+
+  const p = t("dashboard.profile");
 
   return (
     <div className="page">
       <header className="topbar">
-        <h1>התיקים שלי</h1>
+        <h1>{t("dashboard.title")}</h1>
         <button className="secondary" onClick={() => supabase.auth.signOut()}>
-          התנתק
+          {t("nav.signOut")}
         </button>
       </header>
 
       <form className="create-portfolio-form" onSubmit={handleCreate}>
-        {/* שורת שם + כפתור יצירה */}
         <div className="inline-form">
           <input
             type="text"
-            placeholder="שם התיק החדש"
+            placeholder={t("dashboard.namePlaceholder")}
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
           />
           <button type="submit" disabled={creating}>
-            {creating ? "יוצר..." : "תיק חדש +"}
+            {creating ? t("dashboard.creating") : t("dashboard.createBtn")}
           </button>
         </div>
 
-        {/* כפתור פתיחת/סגירת פרופיל השקעות */}
         <button
           type="button"
           className="toggle-profile-btn secondary"
           onClick={() => setShowProfile((v) => !v)}
         >
-          {showProfile ? "▲ הסתר פרופיל השקעות" : "▼ הוסף פרופיל השקעות (אופציונלי)"}
+          {showProfile ? t("dashboard.hideProfile") : t("dashboard.showProfile")}
         </button>
 
-        {/* פאנל פרופיל השקעות */}
         {showProfile && (
           <div className="investor-profile-panel card">
-            <p className="profile-hint">
-              פרטים אלה יסייעו לאנליזה להתאים את ההמלצות לפרופיל האישי שלך.
-              ניתן למלא חלק מהשדות או לדלג לגמרי – הניתוח יעבוד בכל מקרה.
-            </p>
+            <p className="profile-hint">{t("dashboard.profileHint")}</p>
 
-            {/* כאן נכנס העיצוב החדש עם ה-ButtonGroup */}
             <div className="profile-buttons-wrapper">
-              
-              {/* 1. גיל המשקיע */}
+              {/* Age */}
               <div style={{ marginBottom: "1rem" }}>
                 <ButtonGroup
-                  label="גיל המשקיע"
+                  label={p.ageLabel}
                   value={profile.investor_age}
                   onChange={(val) => handleProfileChange("investor_age", val)}
-                  options={[
-                    { label: "עד 30", value: 25 },
-                    { label: "30-45", value: 37 },
-                    { label: "45-60", value: 52 },
-                    { label: "60+", value: 65 },
-                    { label: "לא משנה", value: "" },
-                  ]}
+                  options={p.ageOpts}
                 />
                 <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "-0.5rem" }}>
-                  <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>גיל מדויק:</span>
+                  <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>{p.ageExact}</span>
                   <input
-                    type="number"
-                    min="1"
-                    max="120"
-                    placeholder="35"
+                    type="number" min="1" max="120" placeholder="35"
                     value={profile.investor_age}
                     onChange={(e) => handleProfileChange("investor_age", e.target.value)}
                     style={{ width: "80px", padding: "0.25rem 0.5rem", borderRadius: "4px", border: "1px solid var(--border)" }}
@@ -148,61 +122,37 @@ export default function Dashboard({ token, onSelectPortfolio }) {
                 </div>
               </div>
 
-              {/* 2. אופק השקעה */}
+              {/* Horizon */}
               <ButtonGroup
-                label="אופק השקעה"
+                label={p.horizonLabel}
                 value={profile.investment_horizon_years}
                 onChange={(val) => handleProfileChange("investment_horizon_years", val)}
-                options={[
-                  { label: "עד שנתיים", value: 1 },
-                  { label: "3-5 שנים", value: 4 },
-                  { label: "5-10 שנים", value: 7 },
-                  { label: "10-20 שנה", value: 15 },
-                  { label: "20+ שנה", value: 25 },
-                  { label: "לא משנה", value: "" },
-                ]}
+                options={p.horizonOpts}
               />
 
-              {/* 3. רמת סיכון */}
+              {/* Risk */}
               <ButtonGroup
-                label="רמת סיכון מועדפת"
+                label={p.riskLabel}
                 value={profile.risk_tolerance}
                 onChange={(val) => handleProfileChange("risk_tolerance", val)}
-                options={[
-                  { label: "שמרני", value: "conservative" },
-                  { label: "מאוזן", value: "balanced" },
-                  { label: "אגרסיבי", value: "aggressive" },
-                  { label: "לא משנה", value: "" },
-                ]}
+                options={p.riskOpts}
               />
 
-              {/* 4. מטרת ההשקעה */}
+              {/* Goal */}
               <ButtonGroup
-                label="מטרת ההשקעה"
+                label={p.goalLabel}
                 value={profile.investment_goal}
                 onChange={(val) => handleProfileChange("investment_goal", val)}
-                options={[
-                  { label: "פרישה לגמלאות", value: "retirement" },
-                  { label: "רכישת דירה / נדל\"ן", value: "home_purchase" },
-                  { label: "חיסכון כללי", value: "general_savings" },
-                  { label: "אחר", value: "other" },
-                  { label: "לא משנה", value: "" },
-                ]}
+                options={p.goalOpts}
               />
 
-              {/* 5. צורכי נזילות */}
+              {/* Liquidity */}
               <ButtonGroup
-                label="צורכי נזילות"
+                label={p.liquidityLabel}
                 value={profile.liquidity_needs}
                 onChange={(val) => handleProfileChange("liquidity_needs", val)}
-                options={[
-                  { label: "נמוכה (כסף נעול)", value: "low" },
-                  { label: "בינונית", value: "medium" },
-                  { label: "גבוהה (נדרש בקרוב)", value: "high" },
-                  { label: "לא משנה", value: "" },
-                ]}
+                options={p.liquidityOpts}
               />
-
             </div>
           </div>
         )}
@@ -211,9 +161,9 @@ export default function Dashboard({ token, onSelectPortfolio }) {
       {error && <p className="error">{error}</p>}
 
       {loading ? (
-        <p>טוען...</p>
+        <p>{t("loading")}</p>
       ) : portfolios.length === 0 ? (
-        <p className="empty-state">אין לך עדיין תיקים – צור תיק חדש למעלה</p>
+        <p className="empty-state">{t("dashboard.empty")}</p>
       ) : (
         <ul className="portfolio-list">
           {portfolios.map((p) => (

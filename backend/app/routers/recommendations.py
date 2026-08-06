@@ -1,68 +1,94 @@
-import time
+import logging
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
 from app.auth import get_current_user
 from app.db import get_supabase
+from app.rate_limit import check_and_record
 from app.engine.cash_allocation import recommend_cash_allocation
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/recommendations", tags=["recommendations"])
 
-# Rate Limiting בזיכרון התהליך (per-process) - זהה ל-analysis.py
-_USER_LAST_RECOMMENDATION = {}
-COOLDOWN_SECONDS = 20
+_RATE_LIMIT_MAX_PER_HOUR = 10
+_RATE_LIMIT_MIN_SECONDS  = 20
+_RATE_LIMIT_KEY          = "cash_rec"
+
+
+def _get_language(request: Request) -> str:
+    header = request.headers.get("accept-language", "en")
+    lang   = header.split(",")[0].split("-")[0].strip().lower()
+    return lang if lang in ("en", "he") else "en"
+
 
 class CashAllocationRequest(BaseModel):
-    cash_amount: float = Field(..., gt=0, description="סכום המזומן להשקעה בש\"ח")
-    investor_age: Optional[int] = None
-    investment_horizon_years: Optional[int] = None
-    risk_tolerance: Optional[str] = None
-    investment_goal: Optional[str] = None
-    liquidity_needs: Optional[str] = None
-    portfolio_id: Optional[str] = None
+    cash_amount:              float          = Field(..., gt=0, description="Cash amount to invest")
+    investor_age:             Optional[int]  = None
+    investment_horizon_years: Optional[int]  = None
+    risk_tolerance:           Optional[str]  = None
+    investment_goal:          Optional[str]  = None
+    liquidity_needs:          Optional[str]  = None
+    portfolio_id:             Optional[str]  = None
+
 
 @router.post("/cash-allocation")
 def get_cash_allocation_recommendation(
     req: CashAllocationRequest,
-    current_user: dict = Depends(get_current_user)
+    request: Request,
+    current_user: dict = Depends(get_current_user),
 ):
-    user_id = current_user["id"]
+    user_id  = current_user["id"]
+    language = _get_language(request)
 
-    # בדיקת Rate Limit (צינון בין קריאות)
-    now = time.time()
-    last_run = _USER_LAST_RECOMMENDATION.get(user_id, 0)
-    if now - last_run < COOLDOWN_SECONDS:
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail=f"נא להמתין {int(COOLDOWN_SECONDS - (now - last_run))} שניות בין בקשות המלצה."
-        )
+    check_and_record(
+        user_id=user_id,
+        key=_RATE_LIMIT_KEY,
+        max_per_hour=_RATE_LIMIT_MAX_PER_HOUR,
+        min_seconds_between=_RATE_LIMIT_MIN_SECONDS,
+    )
 
     existing_holdings = None
     supabase = get_supabase()
 
-    # אם סופק portfolio_id - שולפים את ה-holdings הקיימים לטובת הזרקת הקשר
     if req.portfolio_id:
-        port_res = supabase.table("portfolios").select("id").eq("id", req.portfolio_id).eq("user_id", user_id).execute()
+        port_res = (
+            supabase.table("portfolios")
+            .select("id")
+            .eq("id", req.portfolio_id)
+            .eq("user_id", user_id)
+            .execute()
+        )
         if port_res.data:
-            holdings_res = supabase.table("holdings").select("symbol, quantity, avg_price").eq("portfolio_id", req.portfolio_id).execute()
+            holdings_res = (
+                supabase.table("holdings")
+                .select("symbol, quantity, avg_price")
+                .eq("portfolio_id", req.portfolio_id)
+                .execute()
+            )
             existing_holdings = holdings_res.data
+        else:
+            logger.warning(
+                "cash-allocation: user %s sent portfolio_id %s that does not belong to them – ignoring",
+                user_id, req.portfolio_id,
+            )
 
     try:
         result = recommend_cash_allocation(
-            cash_amount=req.cash_amount,
-            investor_age=req.investor_age,
-            investment_horizon_years=req.investment_horizon_years,
-            risk_tolerance=req.risk_tolerance,
-            investment_goal=req.investment_goal,
-            liquidity_needs=req.liquidity_needs,
-            existing_holdings=existing_holdings
+            cash_amount              = req.cash_amount,
+            investor_age             = req.investor_age,
+            investment_horizon_years = req.investment_horizon_years,
+            risk_tolerance           = req.risk_tolerance,
+            investment_goal          = req.investment_goal,
+            liquidity_needs          = req.liquidity_needs,
+            existing_holdings        = existing_holdings,
+            language                 = language,
         )
-        _USER_LAST_RECOMMENDATION[user_id] = now
         return result
 
     except Exception as e:
+        logger.exception("cash-allocation failed for user %s: %s", user_id, e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"שגיאה ביצירת המלצת הפיזור: {str(e)}"
+            detail="Failed to generate allocation recommendation",
         )

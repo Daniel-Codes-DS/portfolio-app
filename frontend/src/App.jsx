@@ -5,12 +5,21 @@ import Dashboard from "./pages/Dashboard";
 import PortfolioDetail from "./pages/PortfolioDetail";
 import CashRecommendation from "./pages/CashRecommendation";
 import ErrorBoundary from "./ErrorBoundary";
+import { LangProvider, useLang } from "./i18n/LangContext";
 
 function AppContent() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedPortfolioId, setSelectedPortfolioId] = useState(null);
-  const [activeTab, setActiveTab] = useState("dashboard"); // 'dashboard' או 'cash_recommendation'
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const { lang, toggleLang, t, dir } = useLang();
+
+  // Sync document direction/language with chosen lang on first render
+  useEffect(() => {
+    document.documentElement.setAttribute("dir", dir);
+    document.documentElement.setAttribute("lang", lang);
+    document.title = t("appName");
+  }, [lang, dir, t]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -30,7 +39,7 @@ function AppContent() {
   }, []);
 
   if (loading) {
-    return <div className="center-screen">טוען...</div>;
+    return <div className="center-screen">{t("loading")}</div>;
   }
 
   if (!session) {
@@ -39,62 +48,72 @@ function AppContent() {
 
   const token = session.access_token;
 
+  const navBtnStyle = (active) => ({
+    padding: "0.5rem 1rem",
+    borderRadius: "6px",
+    border: "none",
+    backgroundColor: active ? "var(--accent, #1f7a6c)" : "transparent",
+    color: active ? "#fff" : "var(--text)",
+    fontWeight: active ? 600 : 400,
+    cursor: "pointer",
+  });
+
+  const langBtnStyle = {
+    padding: "0.4rem 0.85rem",
+    borderRadius: "6px",
+    border: "1px solid var(--border)",
+    background: "transparent",
+    color: "var(--text-muted)",
+    cursor: "pointer",
+    fontSize: "0.85rem",
+    fontWeight: 500,
+    marginInlineStart: "auto",  // pushes to the far end regardless of dir
+  };
+
   return (
     <div className="app-container">
-      {/* סרגל ניווט עליון (Navbar) */}
       <nav
         className="main-nav"
         style={{
           display: "flex",
+          alignItems: "center",
           gap: "1rem",
           padding: "1rem 2rem",
           background: "var(--surface)",
           borderBottom: "1px solid var(--border)",
-          direction: "rtl",
         }}
       >
         <button
+          id="nav-portfolios"
           type="button"
-          onClick={() => {
-            setActiveTab("dashboard");
-            setSelectedPortfolioId(null);
-          }}
-          style={{
-            padding: "0.5rem 1rem",
-            borderRadius: "6px",
-            border: "none",
-            backgroundColor:
-              activeTab === "dashboard" ? "var(--accent, #1f7a6c)" : "transparent",
-            color: activeTab === "dashboard" ? "#fff" : "var(--text)",
-            fontWeight: activeTab === "dashboard" ? 600 : 400,
-            cursor: "pointer",
-          }}
+          onClick={() => { setActiveTab("dashboard"); setSelectedPortfolioId(null); }}
+          style={navBtnStyle(activeTab === "dashboard")}
         >
-          התיקים שלי
+          {t("nav.myPortfolios")}
         </button>
 
         <button
+          id="nav-cash"
           type="button"
-          onClick={() => {
-            setActiveTab("cash_recommendation");
-            setSelectedPortfolioId(null);
-          }}
-          style={{
-            padding: "0.5rem 1rem",
-            borderRadius: "6px",
-            border: "none",
-            backgroundColor:
-              activeTab === "cash_recommendation" ? "var(--accent, #1f7a6c)" : "transparent",
-            color: activeTab === "cash_recommendation" ? "#fff" : "var(--text)",
-            fontWeight: activeTab === "cash_recommendation" ? 600 : 400,
-            cursor: "pointer",
-          }}
+          onClick={() => { setActiveTab("cash_recommendation"); setSelectedPortfolioId(null); }}
+          style={navBtnStyle(activeTab === "cash_recommendation")}
         >
-          המלצת פיזור מזומן
+          {t("nav.cashAllocation")}
+        </button>
+
+        {/* Language toggle - always at the far end */}
+        <button
+          id="btn-lang-toggle"
+          type="button"
+          onClick={toggleLang}
+          style={langBtnStyle}
+          title={lang === "en" ? "Switch to Hebrew" : "עבור לאנגלית"}
+          aria-label="Toggle language"
+        >
+          🌐 {t("nav.langToggle")}
         </button>
       </nav>
 
-      {/* תצוגת הרכיב הפעיל */}
       <main>
         {activeTab === "cash_recommendation" ? (
           <CashRecommendation token={token} />
@@ -115,7 +134,9 @@ function AppContent() {
 export default function App() {
   return (
     <ErrorBoundary>
-      <AppContent />
+      <LangProvider>
+        <AppContent />
+      </LangProvider>
     </ErrorBoundary>
   );
 }

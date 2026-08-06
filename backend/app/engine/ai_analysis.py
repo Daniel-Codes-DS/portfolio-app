@@ -1,7 +1,10 @@
 """
-צוות סוכני CrewAI שמנתח את התיק - זהה ללוגיקה שכבר נבדקה בסוכן המייל.
-מחזיר dict (לא tuple) בכוונה - כדי להימנע מבאגים של "too many values to unpack"
-שכבר נתקלנו בהם בגרסה הקודמת של הפרויקט.
+Portfolio analysis crew using CrewAI agents.
+All agent/task definitions are in English for clarity and AI quality.
+The output language (report_text) is controlled by the `language` parameter:
+  "en" → report written in English (default)
+  "he" → report written in Hebrew
+Returns dict (not tuple) to avoid positional-unpacking bugs.
 """
 
 import json
@@ -13,27 +16,38 @@ from app.config import PRIMARY_MODEL, FALLBACK_MODEL, FEE_CONFIG
 
 logger = logging.getLogger(__name__)
 
-PROFESSIONAL_TONE = (
-    "כתוב בטון מקצועי כמו קטע מתוך דוח אנליסט השקעות ללקוח - תמציתי, ענייני, בגוף שלישי. "
-    "אל תפתח בפנייה אישית (למשל 'שלום', 'אני'), עבור ישר לתוכן."
-)
-
-# תרגום ערכי ה-enum לטקסט עברי ברור לפרומפט
+# ---------------------------------------------------------------------------
+# Investor profile label maps (English internal representation)
+# ---------------------------------------------------------------------------
 _RISK_LABEL = {
-    "conservative": "שמרן (מעדיף יציבות על פני תשואה, נמנע מתנודתיות גבוהה)",
-    "balanced": "מאוזן (מוכן לתנודתיות בינונית לטובת תשואה סבירה)",
-    "aggressive": "אגרסיבי (מוכן לתנודתיות גבוהה לשם תשואה מקסימלית)",
+    "conservative": "Conservative (prefers stability over return, avoids high volatility)",
+    "balanced":     "Balanced (accepts moderate volatility for reasonable returns)",
+    "aggressive":   "Aggressive (accepts high volatility for maximum returns)",
 }
 _GOAL_LABEL = {
-    "retirement": "פרישה לגמלאות",
-    "home_purchase": "רכישת נדל\"ן/דירה",
-    "general_savings": "חיסכון כללי",
-    "other": "מטרה אחרת",
+    "retirement":      "Retirement",
+    "home_purchase":   "Real estate / home purchase",
+    "general_savings": "General savings",
+    "other":           "Other",
 }
 _LIQUIDITY_LABEL = {
-    "low": "נמוכה (רוב הכסף נעול ולא צפוי להידרש בטווח הקצר)",
-    "medium": "בינונית (חלק מהתיק עשוי להידרש בשנים הקרובות)",
-    "high": "גבוהה (חלק משמעותי מהתיק עשוי להידרש בזמן קרוב יחסית)",
+    "low":    "Low (most funds locked, unlikely to be needed short-term)",
+    "medium": "Medium (portion of portfolio may be needed within a few years)",
+    "high":   "High (significant portion may be needed relatively soon)",
+}
+
+# ---------------------------------------------------------------------------
+# Output-language instructions injected into the final task
+# ---------------------------------------------------------------------------
+_LANG_INSTRUCTION = {
+    "en": (
+        "IMPORTANT: Write the entire final report in English. "
+        "Use professional financial English, clear section headings, and concise bullet points."
+    ),
+    "he": (
+        "חשוב: כתוב את כל הדוח הסופי בעברית. "
+        "השתמש בעברית פיננסית מקצועית, כותרות ברורות ונקודות תמציתיות."
+    ),
 }
 
 
@@ -49,34 +63,36 @@ def _build_investor_profile_block(
     liquidity_needs: Optional[str],
 ) -> str:
     """
-    בונה בלוק טקסט תמציתי של פרופיל המשקיע להזרקה לפרומפטים.
-    אם לא סופק אף פרמטר - מחזיר מחרוזת ריקה (ללא שינוי לפרומפטים הקיימים).
+    Builds a concise investor profile block for injection into prompts.
+    Returns empty string if no parameters were supplied (backwards-compatible).
+    Always in English (internal representation).
     """
     lines = []
     if investor_age is not None:
-        lines.append(f"- גיל המשקיע: {investor_age}")
+        lines.append(f"- Investor age: {investor_age}")
     if investment_horizon_years is not None:
-        lines.append(f"- טווח זמן השקעה: {investment_horizon_years} שנים")
+        lines.append(f"- Investment horizon: {investment_horizon_years} years")
     if risk_tolerance is not None:
-        lines.append(f"- רמת סיכון מועדפת: {_RISK_LABEL.get(risk_tolerance, risk_tolerance)}")
+        lines.append(f"- Risk tolerance: {_RISK_LABEL.get(risk_tolerance, risk_tolerance)}")
     if investment_goal is not None:
-        lines.append(f"- מטרת ההשקעה: {_GOAL_LABEL.get(investment_goal, investment_goal)}")
+        lines.append(f"- Investment goal: {_GOAL_LABEL.get(investment_goal, investment_goal)}")
     if liquidity_needs is not None:
-        lines.append(f"- צרכי נזילות: {_LIQUIDITY_LABEL.get(liquidity_needs, liquidity_needs)}")
+        lines.append(f"- Liquidity needs: {_LIQUIDITY_LABEL.get(liquidity_needs, liquidity_needs)}")
 
     if not lines:
         return ""
 
     return (
-        "\n\n## פרופיל המשקיע (חובה להתאים את ההמלצות במפורש לנתונים אלו!)\n"
-        "הנתונים הבאים מתארים את המשקיע ויש להם משקל משמעותי בהחלטה ובניתוח. "
-        "התאם את רמת הסיכון, הקצאת הנכסים, וההמלצות בדו\"ח במפורש לפרופיל זה:\n"
+        "\n\n## Investor Profile (MUST explicitly tailor recommendations to these data points!)\n"
+        "The following details describe the investor. They carry significant weight in the analysis "
+        "and recommendations. Explicitly adjust risk level, asset allocation, and recommendations "
+        "to match this profile:\n"
         + "\n".join(lines)
     )
 
 
 def parse_target_weights(raw_text):
-    """מנסה לפרש JSON של משקלי יעד מפלט ה-LLM. מחזיר None אם הפרסור נכשל."""
+    """Parse target-weight JSON from LLM output. Returns None on failure."""
     if not raw_text:
         return None
     text = raw_text.strip()
@@ -101,128 +117,159 @@ def run_crew_analysis(
     investment_horizon_years=None,
     risk_tolerance=None,
     investment_goal=None,
-    liquidity_needs=None
+    liquidity_needs=None,
+    language: str = "en",
 ) -> dict:
     """
-    metrics: התוצאה של engine.metrics.compute_metrics (dict).
-    פרמטרי פרופיל משקיע: כולם אופציונליים. אם לא סופקו - הניתוח זהה לקודם.
-    מחזיר dict: {"report_text": str, "target_weights": dict|None}
+    metrics: result of engine.metrics.compute_metrics (dict).
+    Investor profile params: all optional.
+    language: "en" (default) or "he" – controls the language of report_text.
+    Returns dict: {"report_text": str, "target_weights": dict|None}
     """
-    summary_df = metrics["summary_df"]
-    total_value = metrics["total_value"]
-    ann_return_port = metrics["annual_return"]
-    ann_vol_port = metrics["annual_vol"]
-    sharpe_port = metrics["sharpe_ratio"]
-    hhi = metrics["hhi_concentration"]
+    summary_df       = metrics["summary_df"]
+    total_value      = metrics["total_value"]
+    ann_return_port  = metrics["annual_return"]
+    ann_vol_port     = metrics["annual_vol"]
+    sharpe_port      = metrics["sharpe_ratio"]
+    hhi              = metrics["hhi_concentration"]
 
     portfolio_context_json = summary_df.round(4).to_json(orient="records", force_ascii=False, indent=2)
     risk_metrics_json = json.dumps({
-        "hhi_concentration": round(float(hhi), 4),
+        "hhi_concentration":           round(float(hhi), 4),
         "annual_volatility_portfolio": round(float(ann_vol_port), 4) if pd.notna(ann_vol_port) else None,
-        "sharpe_ratio_portfolio": round(float(sharpe_port), 4) if pd.notna(sharpe_port) else None,
+        "sharpe_ratio_portfolio":      round(float(sharpe_port), 4) if pd.notna(sharpe_port) else None,
     }, ensure_ascii=False, indent=2)
     return_metrics_json = json.dumps({
-        "total_value": round(float(total_value), 2),
-        "total_unrealized_pnl": round(float(summary_df["unrealized_pnl"].sum()), 2),
-        "annual_return_portfolio_hist": round(float(ann_return_port), 4) if pd.notna(ann_return_port) else None,
+        "total_value":                   round(float(total_value), 2),
+        "total_unrealized_pnl":          round(float(summary_df["unrealized_pnl"].sum()), 2),
+        "annual_return_portfolio_hist":  round(float(ann_return_port), 4) if pd.notna(ann_return_port) else None,
     }, ensure_ascii=False, indent=2)
     fee_config_json = json.dumps(FEE_CONFIG, ensure_ascii=False, indent=2)
 
-    # 1. בונים את בלוק הפרופיל הדינמי בכל קריאה
     investor_profile_block = _build_investor_profile_block(
         investor_age, investment_horizon_years, risk_tolerance, investment_goal, liquidity_needs
     )
+    lang_instruction = _LANG_INSTRUCTION.get(language, _LANG_INSTRUCTION["en"])
 
     llm = _build_llm(PRIMARY_MODEL)
 
-    # 2. הגדרת הסוכנים וה-Tasks בתוך הפונקציה (להבטחת פרומפטים מעודכנים בזיכרון)
-    portfolio_analyst = Agent(
-        role="אנליסט תיקים",
-        goal="לתאר ולסכם את הרכב התיק בצורה מקצועית ומדויקת",
-        backstory=f"אנליסט תיקים בכיר עם ניסיון רב בכתיבת דוחות ללקוחות פרטיים. {PROFESSIONAL_TONE}",
-        llm=llm
-    )
-    risk_analyst = Agent(
-        role="אנליסט סיכונים",
-        goal="לזהות ולהסביר סיכונים בצורה מקצועית",
-        backstory=f"אנליסט סיכונים בכיר, מומחה במדדי VaR, Sharpe ופיזור סיכון. {PROFESSIONAL_TONE}",
-        llm=llm
-    )
-    return_analyst = Agent(
-        role="אנליסט תשואות",
-        goal="לנתח ביצועים ורווח/הפסד בצורה מקצועית",
-        backstory=f"אנליסט ביצועים בכיר המתמחה בתשואה מתואמת סיכון. {PROFESSIONAL_TONE}",
-        llm=llm
-    )
-    cost_benefit_analyst = Agent(
-        role="אנליסט עלות-תועלת",
-        goal="לקבוע אם שינוי בתיק משתלם מול עמלות וטרחה, בצורה מקצועית",
-        backstory=f"מומחה למסחר יעיל ולעלויות עסקה. {PROFESSIONAL_TONE}",
-        llm=llm
-    )
-    chief_strategist = Agent(
-        role="אסטרטג ראשי",
-        goal="לכתוב דוח סיכום מקצועי, מובנה וזהיר, המיועד ללקוח",
-        backstory=(
-            "אנליסט השקעות בכיר בעל ניסיון רב בכתיבת דוחות סיכום מקצועיים ללקוחות פרטיים. "
-            f"{PROFESSIONAL_TONE} תמיד מבהיר בבירור שמדובר בניתוח אוטומטי ולא בייעוץ השקעות מוסמך."
-        ),
-        llm=llm
+    # ------------------------------------------------------------------
+    # Agents – all defined in English for best LLM quality
+    # ------------------------------------------------------------------
+    professional_tone = (
+        "Write in a professional tone like an analyst report section for a private client: "
+        "concise, factual, third person. Do not open with a personal greeting (e.g. 'Hello', 'I am')."
     )
 
+    portfolio_analyst = Agent(
+        role="Portfolio Analyst",
+        goal="Describe and summarise portfolio composition professionally and accurately",
+        backstory=f"Senior portfolio analyst with extensive experience writing client reports. {professional_tone}",
+        llm=llm,
+    )
+    risk_analyst = Agent(
+        role="Risk Analyst",
+        goal="Identify and explain risks professionally",
+        backstory=f"Senior risk analyst, expert in VaR, Sharpe ratio and risk diversification. {professional_tone}",
+        llm=llm,
+    )
+    return_analyst = Agent(
+        role="Performance Analyst",
+        goal="Analyse performance and P&L professionally",
+        backstory=f"Senior performance analyst specialising in risk-adjusted returns. {professional_tone}",
+        llm=llm,
+    )
+    cost_benefit_analyst = Agent(
+        role="Cost-Benefit Analyst",
+        goal="Determine whether portfolio changes are worthwhile given fees and effort",
+        backstory=f"Expert in efficient trading and transaction costs. {professional_tone}",
+        llm=llm,
+    )
+    chief_strategist = Agent(
+        role="Chief Investment Strategist",
+        goal="Write a professional, structured, cautious summary report for the client",
+        backstory=(
+            "Senior investment analyst with extensive experience writing professional summary reports "
+            f"for private clients. {professional_tone} Always clarifies that the analysis is automated "
+            "and does not constitute licensed investment advice."
+        ),
+        llm=llm,
+    )
+
+    # ------------------------------------------------------------------
+    # Tasks
+    # ------------------------------------------------------------------
     task_portfolio = Task(
-        description=f"נתח את הרכב התיק. {PROFESSIONAL_TONE}\n{portfolio_context_json}",
-        expected_output="סיכום מקצועי של הרכב התיק",
-        agent=portfolio_analyst
+        description=(
+            f"Analyse the portfolio composition. {professional_tone}\n"
+            f"Portfolio data (JSON):\n{portfolio_context_json}"
+        ),
+        expected_output="Professional portfolio composition summary",
+        agent=portfolio_analyst,
     )
     task_risk = Task(
-        description=f"נתח סיכונים. {PROFESSIONAL_TONE}\n{risk_metrics_json}{investor_profile_block}",
-        expected_output="ניתוח סיכונים מקצועי המביא בחשבון את פרופיל המשקיע אם סופק",
-        agent=risk_analyst
+        description=(
+            f"Analyse portfolio risk. {professional_tone}\n"
+            f"Risk metrics (JSON):\n{risk_metrics_json}"
+            f"{investor_profile_block}"
+        ),
+        expected_output="Professional risk analysis that accounts for the investor profile if provided",
+        agent=risk_analyst,
     )
     task_return = Task(
-        description=f"נתח ביצועים. {PROFESSIONAL_TONE}\n{return_metrics_json}",
-        expected_output="ניתוח תשואות מקצועי",
-        agent=return_analyst
+        description=(
+            f"Analyse portfolio performance. {professional_tone}\n"
+            f"Performance metrics (JSON):\n{return_metrics_json}"
+        ),
+        expected_output="Professional performance analysis",
+        agent=return_analyst,
     )
     task_cost_benefit = Task(
-        description=f"בהינתן עמלות: {fee_config_json}\nהאם כדאי לשקול שינויים בתיק? {PROFESSIONAL_TONE}",
-        expected_output="מסקנת עלות-תועלת מקצועית",
-        agent=cost_benefit_analyst
+        description=(
+            f"Given the fee configuration: {fee_config_json}\n"
+            f"Is it worthwhile to consider portfolio changes? {professional_tone}"
+        ),
+        expected_output="Professional cost-benefit conclusion",
+        agent=cost_benefit_analyst,
     )
     task_final = Task(
         description=(
+            f"{lang_instruction}\n\n"
             f"{investor_profile_block}\n\n"
-            "שלב את הניתוחים הקודמים (הרכב תיק, סיכונים, תשואות, עלות-תועלת) לדוח סיכום מקצועי אחד.\n"
-            "כללי כתיבה מחייבים:\n"
-            "- אל תפתח בפנייה אישית ('שלום', 'אני האסטרטג...') - עבור ישר לתוכן\n"
-            "- השתמש בכותרות משנה ברורות (## כותרת) לכל סעיף: תמצית מנהלים, הרכב התיק, "
-            "ניתוח סיכונים, ניתוח תשואות, המלצות, סיכונים לתשומת לב\n"
-            "- המלצות בפורמט רשימה ממוספרת, כל אחת עם נימוק כמותי קצר מבוסס הנתונים\n"
-            "- התאם את ההמלצות במפורש לנתוני פרופיל המשקיע המופיעים למעלה (אם צוינו)\n"
-            "- טון מקצועי, תמציתי, בגוף שלישי - כמו דוח אנליסט ללקוח, לא כמו הודעת צ'אט\n"
-            "- סיים תמיד בהבהרה שזהו ניתוח אוטומטי ואינו מהווה ייעוץ השקעות מוסמך"
+            "Combine the previous analyses (portfolio composition, risks, performance, cost-benefit) "
+            "into a single professional summary report.\n"
+            "Mandatory writing rules:\n"
+            "- Do NOT open with a personal greeting ('Hello', 'I am the strategist...') – go straight to content\n"
+            "- Use clear section headings (## Heading) for each section: Executive Summary, "
+            "Portfolio Composition, Risk Analysis, Performance Analysis, Recommendations, Key Risks\n"
+            "- Recommendations as a numbered list, each with a short quantitative rationale from the data\n"
+            "- Explicitly tailor recommendations to the investor profile shown above (if provided)\n"
+            "- Professional tone, concise, third person – like an analyst report, not a chat message\n"
+            "- Always end with a disclaimer that this is automated analysis and does not constitute "
+            "licensed investment advice"
         ),
-        expected_output="דוח סיכום מקצועי בעברית, מובנה בכותרות משנה, ללא פניות אישיות",
+        expected_output=f"Professional summary report in {'English' if language == 'en' else 'Hebrew'}, "
+                        "structured with section headings, no personal greetings",
         agent=chief_strategist,
         context=[task_portfolio, task_risk, task_return, task_cost_benefit],
     )
     task_target_allocation = Task(
         description=(
             f"{investor_profile_block}\n\n"
-            "בהתבסס על כל הניתוחים הקודמים ועל פרופיל המשקיע (אם סופק), הצע הקצאת יעד (target allocation) מספרית מעודכנת לתיק.\n"
-            "השתמש באותם טיקרים שמופיעים בתיק הנוכחי בלבד (אם ממליץ למכור נכס לגמרי - הקצה לו משקל 0).\n"
-            "המשקלים חייבים להיות מספרים בין 0 ל-1 שסכומם קרוב ל-1 (100%).\n"
-            f"טיקרים נוכחיים ומשקלם: {portfolio_context_json}\n"
-            "החזר אך ורק אובייקט JSON תקין, ללא טקסט נוסף, ללא markdown fences, בפורמט המדויק:\n"
-            '{"TICKER1": 0.30, "TICKER2": 0.15}'
+            "Based on all previous analyses and the investor profile (if provided), "
+            "propose an updated numerical target allocation for the portfolio.\n"
+            "Use only the tickers already in the portfolio "
+            "(if recommending full sale of an asset, assign it weight 0).\n"
+            "Weights must be numbers between 0 and 1 that sum to approximately 1 (100%).\n"
+            f"Current tickers and weights: {portfolio_context_json}\n"
+            "Return ONLY a valid JSON object, no additional text, no markdown fences, "
+            'in this exact format: {"TICKER1": 0.30, "TICKER2": 0.15}'
         ),
-        expected_output="אובייקט JSON בלבד עם משקלי יעד מומלצים לכל טיקר",
+        expected_output="JSON object only with recommended target weights per ticker",
         agent=cost_benefit_analyst,
         context=[task_portfolio, task_risk, task_return, task_cost_benefit],
     )
 
-    # 3. הדפסה ללוג לבדיקת קבלה לפני ה-kickoff
     logger.info("=== TASK FINAL DESCRIPTION START ===")
     logger.info(task_final.description)
     logger.info("=== TASK FINAL DESCRIPTION END ===")
@@ -242,7 +289,8 @@ def run_crew_analysis(
             agent.llm = fallback_llm
         crew.kickoff()
 
-    report_text = task_final.output.raw if task_final.output is not None else ""
-    target_weights = parse_target_weights(task_target_allocation.output.raw) if task_target_allocation.output is not None else None
+    report_text    = task_final.output.raw            if task_final.output            is not None else ""
+    target_weights = parse_target_weights(task_target_allocation.output.raw) \
+                     if task_target_allocation.output is not None else None
 
     return {"report_text": report_text, "target_weights": target_weights}
