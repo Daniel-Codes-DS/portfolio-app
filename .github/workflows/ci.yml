@@ -36,10 +36,11 @@ jobs:
       - name: Syntax check (compileall)
         run: python -m compileall app -q
 
-      - name: Import check (app must boot without errors)
+     - name: Import check (app must boot without errors)
         # Mirrors the manual check already used during development
         # (HANDOVER section 4: "from app.main import app without errors")
-        run: python -c "from app.main import app; print('OK: app imports successfully')"
+        run: |
+          python -c "from app.main import app; print('app imported successfully')"
 
       - name: Run pytest (only if tests exist)
         run: |
