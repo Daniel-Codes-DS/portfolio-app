@@ -156,9 +156,11 @@ def generate_pdf_report(
     # For LTR: label left, value right
     if is_rtl:
         col_widths = [40 * mm, 80 * mm]
+        bg_start, bg_end = (1, 0), (1, -1)
     else:
         col_widths = [80 * mm, 40 * mm]
         summary_rows = [[label, value] for value, label in summary_rows]
+        bg_start, bg_end = (0, 0), (0, -1)
 
     table = Table(summary_rows, colWidths=col_widths, hAlign=h_align)
     table.setStyle(TableStyle([
@@ -166,7 +168,7 @@ def generate_pdf_report(
         ("FONTSIZE",      (0, 0), (-1, -1), 10),
         ("ALIGN",         (0, 0), (-1, -1), h_align),
         ("GRID",          (0, 0), (-1, -1), 0.5, "#dddddd"),
-        ("BACKGROUND",    (0, 0), (0, -1) if not is_rtl else (1, 0), (0, -1) if not is_rtl else (1, -1), "#f5f5f5"),
+        ("BACKGROUND",    bg_start, bg_end, "#f5f5f5"),
         ("TOPPADDING",    (0, 0), (-1, -1), 6),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
     ]))
