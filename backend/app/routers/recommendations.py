@@ -67,7 +67,7 @@ def get_cash_allocation_recommendation(
         if port_res.data:
             holdings_res = (
                 supabase.table("holdings")
-                .select("symbol, quantity, avg_price")
+                .select("ticker, quantity, avg_price")
                 .eq("portfolio_id", req.portfolio_id)
                 .execute()
             )

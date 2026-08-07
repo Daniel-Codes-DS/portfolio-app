@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/portfolios/{portfolio_id}/analysis", tags=["analysis"])
 
 _RATE_LIMIT_MAX_PER_HOUR = 5
-_RATE_LIMIT_MIN_SECONDS  = 20
+_RATE_LIMIT_MIN_SECONDS  = 60
 _RATE_LIMIT_KEY          = "analysis"
 
 

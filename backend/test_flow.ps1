@@ -1,4 +1,4 @@
-# =============================================================================
+﻿# =============================================================================
 # test_flow.ps1 - בדיקת E2E מלאה מול Backend בפועל
 # =============================================================================
 #
@@ -16,7 +16,9 @@
 param(
     [string]$BaseUrl       = "https://portfolio-app-backend-45n4.onrender.com",
     [string]$SupabaseUrl   = "",   # חובה רק אם SupabaseAnonKey מסופק ידנית
-    [string]$SupabaseAnonKey = ""  # אם לא מסופק, ינסה לקרוא מ-backend\.env
+    [string]$SupabaseAnonKey = "", # אם לא מסופק, ינסה לקרוא מ-backend\.env
+    [string]$TestEmail     = "",
+    [string]$TestPassword  = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -128,14 +130,18 @@ if (-not $SupabaseUrl) {
 # ---------------------------------------------------------------------------
 # יצירת פרטי בדיקה זמניים
 # ---------------------------------------------------------------------------
-$timestamp  = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
-$testEmail  = "testuser_$timestamp@example-test.com"
-$testPass   = "TestPass123!_$timestamp"
+if ($TestEmail -and $TestPassword) {
+    Write-Host " משתמש בדיקה סופק מראש: $TestEmail (מדלג על יצירה)" -ForegroundColor DarkGray
+} else {
+    $timestamp  = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
+    $TestEmail  = "testuser_$timestamp@example-test.com"
+    $TestPassword   = "TestPass123!_$timestamp"
+    Write-Host " משתמש בדיקה חדש: $TestEmail" -ForegroundColor DarkGray
+}
 
 Write-Host "`n==============================" -ForegroundColor White
 Write-Host " E2E Test - $BaseUrl" -ForegroundColor White
 Write-Host "==============================" -ForegroundColor White
-Write-Host " משתמש בדיקה: $testEmail" -ForegroundColor DarkGray
 
 # ---------------------------------------------------------------------------
 # שלב 0: /health
@@ -146,24 +152,39 @@ if ($h.status -ne "ok") { Write-Fail "health לא תקין: $($h | ConvertTo-Jso
 Write-OK "status = ok"
 
 # ---------------------------------------------------------------------------
-# שלב 1: Signup
+# שלב 1: Auth (Signup / Login)
 # ---------------------------------------------------------------------------
-Write-Step "1. Signup"
-$signupResp = Invoke-SupabaseAuth -Endpoint "signup" -Body @{
-    email    = $testEmail
-    password = $testPass
+Write-Step "1. Auth"
+$accessToken = ""
+
+if ($TestEmail -and $TestPassword) {
+    Write-Host "    מנסה login עם משתמש קיים..." -ForegroundColor Yellow
+    $loginResp   = Invoke-SupabaseAuth -Endpoint "token?grant_type=password" -Body @{
+        email    = $TestEmail
+        password = $TestPassword
+    }
+    $accessToken = $loginResp.access_token
 }
-$accessToken = $signupResp.access_token
+
+if (-not $accessToken) {
+    Write-Host "    מנסה Signup עם משתמש חדש..." -ForegroundColor Yellow
+    $signupResp = Invoke-SupabaseAuth -Endpoint "signup" -Body @{
+        email    = $TestEmail
+        password = $TestPassword
+    }
+    $accessToken = $signupResp.access_token
+}
+
 if (-not $accessToken) {
     # ייתכן שהמייל "קיים" (אם הסקריפט רץ פעמיים באותה שנייה) - ננסה login
     Write-Host "    signup לא החזיר access_token - מנסה login..." -ForegroundColor Yellow
     $loginResp   = Invoke-SupabaseAuth -Endpoint "token?grant_type=password" -Body @{
-        email    = $testEmail
-        password = $testPass
+        email    = $TestEmail
+        password = $TestPassword
     }
     $accessToken = $loginResp.access_token
 }
-if (-not $accessToken) { Write-Fail "לא התקבל access_token" }
+if (-not $accessToken) { Write-Fail "לא התקבל access_token (שים לב שאם Supabase דורש אימות מייל, לא ניתן להשתמש במשתמש חדש בלי לאשר אותו - העבר משתמש קיים באמצעות -TestEmail ו- -TestPassword)" }
 Write-OK "access_token התקבל (${($accessToken.Substring(0,20))}...)"
 
 # ---------------------------------------------------------------------------
@@ -187,9 +208,9 @@ Write-OK "portfolio_id = $portfolioId"
 # ---------------------------------------------------------------------------
 Write-Step "3. הוספת אחזקות (PUT /{portfolio_id}/holdings)"
 $holdingsResult = Invoke-Api -Method PUT -Path "/portfolios/$portfolioId/holdings" -Token $accessToken -Body @(
-    @{ symbol = "AAPL"; quantity = 10; avg_price = 150.0 }
-    @{ symbol = "MSFT"; quantity = 5;  avg_price = 300.0 }
-    @{ symbol = "GOOGL"; quantity = 2; avg_price = 2800.0 }
+    @{ ticker = "AAPL"; quantity = 10; avg_price = 150.0 }
+    @{ ticker = "MSFT"; quantity = 5;  avg_price = 300.0 }
+    @{ ticker = "GOOGL"; quantity = 2; avg_price = 2800.0 }
 )
 Write-OK "count = $($holdingsResult.count)"
 

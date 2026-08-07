@@ -55,6 +55,8 @@ def startup():
     logger.info("CORS allowed origins: %s", ALLOWED_ORIGINS)
 
 
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
     """
@@ -62,6 +64,10 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     (כולל traceback, לצורך אבחון מהיר בפרודקשן) - אבל מחזיר ללקוח תגובה נקייה
     בלי לחשוף פרטי implementation. זה מונע "קריסה" גולמית שמגיעה למשתמש.
     """
+    if isinstance(exc, StarletteHTTPException):
+        from fastapi.responses import JSONResponse
+        return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+
     logger.exception("Unhandled exception on %s %s", request.method, request.url.path)
     return JSONResponse(
         status_code=500,
@@ -72,10 +78,24 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 _CODE_VERSION = "2026-08-07-v3-queryparam"
 
 
+from app.db import get_supabase
+
 @app.get("/health")
 def health():
-    return {"status": "ok", "code_version": _CODE_VERSION}
-
+    db_status = "ok"
+    try:
+        supabase = get_supabase()
+        # Perform a lightweight query to verify DB connection
+        supabase.table("portfolios").select("id").limit(1).execute()
+    except Exception as e:
+        logger.error("Health check DB connection failed: %s", e)
+        db_status = "error"
+        
+    return {
+        "status": "ok" if db_status == "ok" else "degraded",
+        "db_status": db_status,
+        "code_version": _CODE_VERSION
+    }
 
 @app.get("/debug/lang")
 def debug_lang(request: Request):

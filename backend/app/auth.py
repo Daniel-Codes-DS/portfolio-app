@@ -61,8 +61,14 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Authentication service unavailable, please try again in a moment",
         )
-
     except Exception as e:
+        # If the error is an AuthApiError (e.g. invalid JWT format or expired token), return 401
+        error_type = type(e).__name__
+        if "Auth" in error_type or "JWT" in str(e):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token or expired session",
+            )
         # כשל רשת/connection error אחר - אותו טיפול: 503 לא 401
         logger.error("Supabase auth.get_user failed: %s", e)
         raise HTTPException(
