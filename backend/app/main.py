@@ -94,20 +94,24 @@ _CODE_VERSION = "2026-08-07-v3-queryparam"
 from app.db import get_supabase
 
 @app.get("/health")
-def health():
-    db_status = "ok"
+def health_check():
+    """
+    בדיקת תקינות בסיסית של השרת והחיבור למסד הנתונים.
+    משמש גם למניעת Cold Starts מול UptimeRobot.
+    """
+    supabase_status = "ok"
     try:
         supabase = get_supabase()
-        # Perform a lightweight query to verify DB connection
-        supabase.table("portfolios").select("id").limit(1).execute()
+        # Query a single row from a lightweight table or just check auth admin
+        response = supabase.table("portfolios").select("id").limit(1).execute()
     except Exception as e:
-        logger.error("Health check DB connection failed: %s", e)
-        db_status = "error"
-        
+        logger.error(f"Supabase health check failed: {e}")
+        supabase_status = "error"
+
     return {
-        "status": "ok" if db_status == "ok" else "degraded",
-        "db_status": db_status,
-        "code_version": _CODE_VERSION
+        "status": "ok" if supabase_status == "ok" else "degraded",
+        "version": _CODE_VERSION,
+        "supabase": supabase_status
     }
 
 @app.get("/debug/lang")
