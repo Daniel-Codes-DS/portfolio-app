@@ -25,12 +25,19 @@ _RATE_LIMIT_KEY          = "analysis"
 
 def _get_language(request: Request) -> str:
     """
-    Read X-App-Language from the request header (set by our frontend).
-    Defaults to 'en' if not provided.
+    Read language from query parameter 'lang' (most reliable),
+    falling back to X-App-Language header, then Accept-Language header.
+    Defaults to 'en'.
     """
-    header = request.headers.get("x-app-language", "en")
-    lang   = header.strip().lower()
-    return lang if lang in ("en", "he") else "en"
+    lang = request.query_params.get("lang", "").strip().lower()
+    if lang in ("en", "he"):
+        logger.debug("Language resolved via query param: %s", lang)
+        return lang
+    
+    lang = request.headers.get("x-app-language", "").strip().lower()
+    if lang in ("en", "he"):
+        return lang
+    return "en"
 
 
 def _get_owned_portfolio(supabase, portfolio_id, user_id):
@@ -53,6 +60,7 @@ def _safe_float(value):
 @router.post("")
 def run_analysis(portfolio_id: str, request: Request, user=Depends(get_current_user)):
     language = _get_language(request)
+    logger.info("=== LANGUAGE DETECTED: %s (query_params=%s, headers.x-app-language=%s) ===", language, request.query_params.get('lang', 'MISSING'), request.headers.get('x-app-language', 'MISSING'))
 
     check_and_record(
         user_id=user["id"],

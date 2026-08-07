@@ -14,7 +14,9 @@ async function request(path, { method = "GET", token, body, isFormData = false }
   headers["X-App-Language"] = getLang();
   headers["Accept-Language"] = getLang();
 
-  const res = await fetch(`${API_BASE}${path}`, {
+  // Append lang as query param (most reliable method - not affected by CORS/header issues)
+  const langParam = path.includes('?') ? `&lang=${getLang()}` : `?lang=${getLang()}`;
+  const res = await fetch(`${API_BASE}${path}${langParam}`, {
     method,
     headers,
     body: isFormData ? body : body !== undefined ? JSON.stringify(body) : undefined,

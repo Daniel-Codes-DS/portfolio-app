@@ -17,9 +17,13 @@ _RATE_LIMIT_KEY          = "cash_rec"
 
 
 def _get_language(request: Request) -> str:
-    header = request.headers.get("x-app-language", "en")
-    lang   = header.strip().lower()
-    return lang if lang in ("en", "he") else "en"
+    lang = request.query_params.get("lang", "").strip().lower()
+    if lang in ("en", "he"):
+        return lang
+    lang = request.headers.get("x-app-language", "").strip().lower()
+    if lang in ("en", "he"):
+        return lang
+    return "en"
 
 
 class CashAllocationRequest(BaseModel):
@@ -40,6 +44,7 @@ def get_cash_allocation_recommendation(
 ):
     user_id  = current_user["id"]
     language = _get_language(request)
+    logger.info("=== CASH ALLOC LANGUAGE: %s (query_params=%s) ===", language, request.query_params.get('lang', 'MISSING'))
 
     check_and_record(
         user_id=user_id,
