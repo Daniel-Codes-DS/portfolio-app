@@ -79,7 +79,6 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     בלי לחשוף פרטי implementation. זה מונע "קריסה" גולמית שמגיעה למשתמש.
     """
     if isinstance(exc, StarletteHTTPException):
-        from fastapi.responses import JSONResponse
         return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 
     logger.exception("Unhandled exception on %s %s", request.method, request.url.path)
