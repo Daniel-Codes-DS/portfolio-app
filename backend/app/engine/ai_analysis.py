@@ -284,11 +284,18 @@ def run_crew_analysis(
 
     try:
         crew.kickoff()
-    except Exception:
+    except Exception as primary_e:
+        logger.warning(f"Primary model failed, retrying with fallback: {primary_e}")
         fallback_llm = _build_llm(FALLBACK_MODEL)
         for agent in crew.agents:
             agent.llm = fallback_llm
-        crew.kickoff()
+        try:
+            crew.kickoff()
+        except Exception as fallback_e:
+            import sentry_sdk
+            sentry_sdk.capture_exception(fallback_e)
+            logger.error(f"Fallback model also failed: {fallback_e}")
+            raise
 
     report_text    = task_final.output.raw            if task_final.output            is not None else ""
     target_weights = parse_target_weights(task_target_allocation.output.raw) \

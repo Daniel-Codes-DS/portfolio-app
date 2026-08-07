@@ -131,8 +131,14 @@ Required JSON format:
     except Exception as e:
         logger.warning(f"Primary model failed, retrying with fallback: {e}")
         asset_allocator.llm = _build_llm(FALLBACK_MODEL)
-        crew.kickoff()
-        raw_output = task.output.raw
+        try:
+            crew.kickoff()
+            raw_output = task.output.raw
+        except Exception as fallback_e:
+            import sentry_sdk
+            sentry_sdk.capture_exception(fallback_e)
+            logger.error(f"Fallback model also failed: {fallback_e}")
+            raise
 
     return _parse_and_calculate_allocation(raw_output, cash_amount, language)
 

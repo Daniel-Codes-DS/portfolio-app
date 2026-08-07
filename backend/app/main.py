@@ -14,6 +14,20 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Sentry initialization for Error Tracking (Priority 2)
+# The DSN will be read from the SENTRY_DSN environment variable on Render.
+import sentry_sdk
+sentry_dsn = os.environ.get("SENTRY_DSN", "").strip()
+if sentry_dsn:
+    sentry_sdk.init(
+        dsn=sentry_dsn,
+        traces_sample_rate=1.0,
+        profiles_sample_rate=1.0,
+    )
+    logger.info("Sentry initialized successfully")
+else:
+    logger.warning("SENTRY_DSN not provided, Sentry error tracking is disabled")
+
 app = FastAPI(title="Portfolio Analysis API")
 
 # CORS - מאפשר ל-Frontend (שרץ על כתובת אחרת) לדבר עם ה-API הזה.

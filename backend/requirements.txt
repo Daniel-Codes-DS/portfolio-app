@@ -16,3 +16,4 @@ markdown
 reportlab
 python-bidi
 redis
+sentry-sdk
