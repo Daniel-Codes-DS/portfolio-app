@@ -6,6 +6,7 @@ import PortfolioDetail from "./pages/PortfolioDetail";
 import CashRecommendation from "./pages/CashRecommendation";
 import ErrorBoundary from "./ErrorBoundary";
 import { LangProvider, useLang } from "./i18n/LangContext";
+import Footer from "./components/Footer";
 
 function AppContent() {
   const [session, setSession] = useState(null);
@@ -71,7 +72,7 @@ function AppContent() {
   };
 
   return (
-    <div className="app-container">
+    <div className="app-container" style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
       <nav
         className="main-nav"
         style={{
@@ -114,7 +115,7 @@ function AppContent() {
         </button>
       </nav>
 
-      <main>
+      <main style={{ flex: 1 }}>
         {activeTab === "cash_recommendation" ? (
           <CashRecommendation token={token} />
         ) : selectedPortfolioId ? (
@@ -127,6 +128,8 @@ function AppContent() {
           <Dashboard token={token} onSelectPortfolio={setSelectedPortfolioId} />
         )}
       </main>
+
+      <Footer />
     </div>
   );
 }
