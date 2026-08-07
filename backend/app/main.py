@@ -68,7 +68,36 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
         content={"detail": "שגיאת שרת פנימית - הצוות טכני קיבל התראה"},
     )
 
+# Code version - bump this on every deploy to verify Render picked up the change
+_CODE_VERSION = "2026-08-07-v3-queryparam"
+
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    return {"status": "ok", "code_version": _CODE_VERSION}
+
+
+@app.get("/debug/lang")
+def debug_lang(request: Request):
+    """
+    Hit this endpoint in the browser to verify language detection.
+    Example: /debug/lang?lang=en  or  /debug/lang?lang=he
+    """
+    qp = request.query_params.get("lang", "MISSING")
+    hdr_xapp = request.headers.get("x-app-language", "MISSING")
+    hdr_accept = request.headers.get("accept-language", "MISSING")
+
+    # Same logic as routers
+    lang = qp.strip().lower() if qp != "MISSING" else ""
+    resolved = lang if lang in ("en", "he") else None
+    if not resolved:
+        lang2 = hdr_xapp.strip().lower() if hdr_xapp != "MISSING" else ""
+        resolved = lang2 if lang2 in ("en", "he") else "en"
+
+    return {
+        "resolved_language": resolved,
+        "query_param_lang": qp,
+        "header_x_app_language": hdr_xapp,
+        "header_accept_language": hdr_accept,
+        "code_version": _CODE_VERSION,
+    }
