@@ -9,10 +9,21 @@ import yfinance as yf
 from app.config import LOOKBACK_PERIOD
 
 
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+import urllib.error
+
+# Yahoo Finance API is undocumented and rate-limits aggressively if many calls are made in a short time.
+# We retry up to 4 times, waiting exponentially (2s, 4s, 8s) if we hit an HTTP or connection error.
+@retry(
+    stop=stop_after_attempt(4),
+    wait=wait_exponential(multiplier=1, min=2, max=10),
+    retry=retry_if_exception_type((urllib.error.URLError, ConnectionError, TimeoutError, ValueError)),
+    reraise=True
+)
 def fetch_price_history(tickers, period=LOOKBACK_PERIOD):
     if not tickers:
         return pd.DataFrame()
-    data = yf.download(tickers, period=period, auto_adjust=True, progress=False)["Close"]
+    data = yf.download(tickers, period=period, auto_adjust=True, progress=False, threads=False, timeout=10)["Close"]
     if isinstance(data, pd.Series):
         data = data.to_frame(name=tickers[0])
     return data

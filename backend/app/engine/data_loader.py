@@ -291,6 +291,18 @@ def extract_holdings_via_llm(filename, content_bytes):
     df = pd.DataFrame(holdings)
     return _process_dataframe(df)
 
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+import urllib.error
+
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=2, max=5),
+    retry=retry_if_exception_type((urllib.error.URLError, ConnectionError, TimeoutError, ValueError)),
+    reraise=True
+)
+def _yf_download_with_retry(tickers):
+    return yf.download(tickers=tickers, period="5d", progress=False, threads=False, timeout=5)
+
 def _check_ticker_resolution(tickers):
     """
     משוב מוקדם על טיקרים שכנראה לא יזוהו ע"י yfinance - עוד בשלב ה-upload,
@@ -303,9 +315,7 @@ def _check_ticker_resolution(tickers):
         return {"checked": True, "unresolved_tickers": []}
 
     try:
-        data = yf.download(
-            tickers=unique_tickers, period="5d", progress=False, threads=True, timeout=5,
-        )
+        data = _yf_download_with_retry(unique_tickers)
         if data.empty:
             return {"checked": True, "unresolved_tickers": unique_tickers}
 
