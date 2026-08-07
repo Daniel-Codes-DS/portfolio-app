@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import { useLang } from "../i18n/LangContext";
+import DisclaimerBanner from "../components/DisclaimerBanner";
 
 export default function PortfolioDetail({ token, portfolioId, onBack }) {
   const { t, locale } = useLang();
@@ -103,6 +104,7 @@ export default function PortfolioDetail({ token, portfolioId, onBack }) {
       </section>
 
       {/* Analysis */}
+      <DisclaimerBanner />
       <section className="card">
         <h2>{t("portfolio.analysisTitle")}</h2>
         <button onClick={handleRunAnalysis} disabled={analyzing || holdingsCount === 0}>
@@ -111,6 +113,11 @@ export default function PortfolioDetail({ token, portfolioId, onBack }) {
 
         {analysisResult && (
           <div className="analysis-result">
+            {/* ── Factual Data ── */}
+            <div style={styles.sectionLabel}>
+              <span style={styles.sectionIcon}>📊</span>
+              <span>{t("disclaimer.factsLabel")}</span>
+            </div>
             <div className="metrics-row">
               <div className="metric">
                 <span className="metric-label">{t("portfolio.portfolioValue")}</span>
@@ -142,6 +149,11 @@ export default function PortfolioDetail({ token, portfolioId, onBack }) {
               </div>
             </div>
 
+            {/* ── AI Analysis ── */}
+            <div style={{ ...styles.sectionLabel, ...styles.aiLabel }}>
+              <span style={styles.sectionIcon}>🤖</span>
+              <span>{t("disclaimer.aiLabel")}</span>
+            </div>
             <pre className="report-text">{analysisResult.report_text}</pre>
 
             <button className="secondary" onClick={() => handleDownloadPdf(analysisResult.analysis_id)}>
@@ -174,3 +186,26 @@ export default function PortfolioDetail({ token, portfolioId, onBack }) {
     </div>
   );
 }
+
+const styles = {
+  sectionLabel: {
+    display: "flex",
+    alignItems: "center",
+    gap: "0.5rem",
+    fontSize: "0.78rem",
+    fontWeight: 700,
+    textTransform: "uppercase",
+    letterSpacing: "0.05em",
+    color: "var(--ink-soft)",
+    margin: "1rem 0 0.5rem",
+    paddingBottom: "0.3rem",
+    borderBottom: "1px solid var(--hairline)",
+  },
+  aiLabel: {
+    color: "#5558a0",
+    borderBottomColor: "#d0d0f0",
+  },
+  sectionIcon: {
+    fontSize: "1rem",
+  },
+};

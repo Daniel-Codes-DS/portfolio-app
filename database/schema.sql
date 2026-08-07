@@ -37,17 +37,32 @@ create table holdings (
 -- טבלה: analysis_runs - היסטוריית כל ניתוח שהורץ (תמונת מצב)
 -- ------------------------------------------------------------
 create table analysis_runs (
-    id                  uuid primary key default gen_random_uuid(),
-    portfolio_id        uuid references portfolios(id) on delete cascade not null,
-    total_value         numeric,
-    annual_return       numeric,
-    annual_vol          numeric,
-    sharpe_ratio        numeric,
-    hhi_concentration   numeric,
-    report_text         text,
-    target_weights      jsonb,
-    pdf_storage_path    text,
-    created_at          timestamptz not null default now()
+    id                       uuid primary key default gen_random_uuid(),
+    portfolio_id             uuid references portfolios(id) on delete cascade not null,
+    total_value              numeric,
+    annual_return            numeric,
+    annual_vol               numeric,
+    sharpe_ratio             numeric,
+    hhi_concentration        numeric,
+    report_text              text,
+    target_weights           jsonb,
+    pdf_storage_path         text,
+    -- Legal audit: which disclaimer version was shown when this analysis was presented.
+    -- Bump the value in analysis.py if disclaimer text changes.
+    disclaimer_version_shown text default 'v1.0',
+    created_at               timestamptz not null default now()
+);
+
+-- ------------------------------------------------------------
+-- טבלאה: user_consents - תיעוד הסכמת המשתמש לדיסקליימר בעת ההרשמה
+-- שומר באיזו גרסה של הדיסקליימר המשתמש אישר (לצורך בדיקה עתידית אם הטקסט ישתנה)
+-- ------------------------------------------------------------
+create table user_consents (
+    id                   uuid primary key default gen_random_uuid(),
+    user_id              uuid references auth.users(id) on delete cascade not null,
+    consent_given_at     timestamptz not null default now(),
+    consent_text_version text not null,
+    unique(user_id, consent_text_version)
 );
 
 -- ------------------------------------------------------------

@@ -120,6 +120,9 @@ def run_analysis(portfolio_id: str, request: Request, user=Depends(get_current_u
         "report_text":     ai_result["report_text"],
         "target_weights":  ai_result["target_weights"],
         "pdf_storage_path": pdf_path,
+        # Audit: record which disclaimer version was displayed when this analysis was shown.
+        # If the disclaimer text changes in future, bump this version string.
+        "disclaimer_version_shown": "v1.0",
     }).execute()
 
     analysis_id = run_resp.data[0]["id"]

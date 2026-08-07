@@ -242,15 +242,30 @@ def run_crew_analysis(
             "Mandatory writing rules:\n"
             "- Do NOT open with a personal greeting ('Hello', 'I am the strategist...') – go straight to content\n"
             "- Use clear section headings (## Heading) for each section: Executive Summary, "
-            "Portfolio Composition, Risk Analysis, Performance Analysis, Recommendations, Key Risks\n"
-            "- Recommendations as a numbered list, each with a short quantitative rationale from the data\n"
-            "- Explicitly tailor recommendations to the investor profile shown above (if provided)\n"
-            "- Professional tone, concise, third person – like an analyst report, not a chat message\n"
-            "- Always end with a disclaimer that this is automated analysis and does not constitute "
-            "licensed investment advice"
+            "Portfolio Composition, Risk Analysis, Performance Analysis, Points for Consideration, Key Risks\n"
+            "  (IMPORTANT: the section must be titled 'Points for Consideration' in English, "
+            "or 'נקודות למחשבה' in Hebrew — NEVER 'Recommendations' or 'המלצות')\n"
+            "- LANGUAGE OF ANALYSIS: use ONLY descriptive-analytical language. "
+            "NEVER use imperative verbs ('buy', 'sell', 'you should', 'קנה', 'מכור', 'כדאי לך'). "
+            "Instead use: 'Historical data suggests...', 'A scenario like X may suit an investor with Y risk profile...', "
+            "'נתונים היסטוריים מראים ש...', 'תרחיש X עשוי להתאים למי שמאפיין סיכון Y...'\n"
+            "- AVOID specific numeric action targets for immediate action "
+            "(e.g. 'increase holding Y by 15% this week'). "
+            "Use directional language only: 'increasing exposure to X could align with the stated risk tolerance, "
+            "subject to the investor\\'s own judgment and further research'\n"
+            "- Each point under 'Points for Consideration' / 'נקודות למחשבה' MUST end with a sentence "
+            "reminding the reader that this is a starting point for personal research or consultation "
+            "with a licensed professional, not a final conclusion\n"
+            "- Professional tone, concise, third person – like an analyst research note, not a chat message\n"
+            "- Always end the entire report with a disclaimer that this is automated AI analysis "
+            "for educational/research purposes only and does not constitute licensed investment advice"
         ),
-        expected_output=f"Professional summary report in {'English' if language == 'en' else 'Hebrew'}, "
-                        "structured with section headings, no personal greetings",
+        expected_output=(
+            f"Professional summary report in {'English' if language == 'en' else 'Hebrew'}, "
+            "structured with section headings, no personal greetings. "
+            "Section titled 'Points for Consideration' (not 'Recommendations'). "
+            "No imperative buy/sell language. Each point ends with a research/consultation reminder."
+        ),
         agent=chief_strategist,
         context=[task_portfolio, task_risk, task_return, task_cost_benefit],
     )
