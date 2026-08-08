@@ -138,6 +138,7 @@ def run_analysis(portfolio_id: str, request: Request, user=Depends(get_current_u
         "sharpe_ratio":    _safe_float(m["sharpe_ratio"]),
         "pdf_storage_path": pdf_path,
         "current_holdings": m["summary_df"].to_dict("records"),
+        "performance_history": m.get("performance_history", []),
     }
 
 

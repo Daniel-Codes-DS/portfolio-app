@@ -3,6 +3,7 @@ import { api } from "../api";
 import { useLang } from "../i18n/LangContext";
 import DisclaimerBanner from "../components/DisclaimerBanner";
 import PortfolioCompositionChart from "../components/PortfolioCompositionChart";
+import PerformanceChart from "../components/PerformanceChart";
 
 export default function PortfolioDetail({ token, portfolioId, onBack }) {
   const { t, locale } = useLang();
@@ -156,8 +157,10 @@ export default function PortfolioDetail({ token, portfolioId, onBack }) {
               currentHoldings={analysisResult.current_holdings || []}
               targetWeights={analysisResult.target_weights || {}}
             />
+            
+            <PerformanceChart performanceHistory={analysisResult.performance_history || []} />
 
-            {/* ── AI Analysis ── */}
+            {/* ── AI Insights ── */}
             <div style={{ ...styles.sectionLabel, ...styles.aiLabel }}>
               <span style={styles.sectionIcon}>🤖</span>
               <span>{t("disclaimer.aiLabel")}</span>

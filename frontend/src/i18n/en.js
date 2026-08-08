@@ -167,6 +167,8 @@ export default {
     uploading: "Uploading...",
     currentComposition: "Current Composition",
     targetComposition: "Target (AI) Composition",
+    performanceTitle: "Historical Performance vs Benchmarks",
+    yourPortfolio: "Your Portfolio",
     analysisTitle: "Analysis",
     runBtn: "Run New Analysis",
     running: "Running analysis... (up to a minute)",

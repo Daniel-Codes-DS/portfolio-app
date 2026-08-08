@@ -84,6 +84,21 @@ def compute_metrics(portfolio_df):
     hhi = (summary_df["weight"] ** 2).sum()
     corr_matrix = daily_returns[valid_tickers].corr() if len(valid_tickers) > 1 else None
 
+    # Calculate historical performance against benchmarks for the UI chart
+    performance_history = []
+    if not port_returns.empty:
+        benchmarks = fetch_price_history(["^GSPC", "TA125.TA"])
+        bench_returns = benchmarks.pct_change(fill_method=None).dropna()
+        # Align all returns by date
+        aligned_returns = pd.concat([port_returns.rename("Portfolio"), bench_returns], axis=1).dropna()
+        # Calculate cumulative returns
+        aligned_cum = (1 + aligned_returns).cumprod() - 1
+        # Format for Recharts: [{date: '2023-01-01', Portfolio: 0.1, SP500: ...}]
+        if not aligned_cum.empty:
+            aligned_cum.index = aligned_cum.index.strftime('%Y-%m-%d')
+            aligned_cum = aligned_cum.rename(columns={"^GSPC": "S&P 500", "TA125.TA": "TA-125"})
+            performance_history = aligned_cum.reset_index().rename(columns={"Date": "date"}).to_dict(orient="records")
+
     return {
         "summary_df": summary_df,
         "total_value": total_value,
@@ -92,5 +107,6 @@ def compute_metrics(portfolio_df):
         "sharpe_ratio": sharpe_port,
         "hhi_concentration": hhi,
         "corr_matrix": corr_matrix,
+        "performance_history": performance_history,
         "unresolved_tickers": list(unresolved["ticker"]) if not unresolved.empty else [],
     }

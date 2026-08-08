@@ -167,6 +167,8 @@ export default {
     uploading: "מעלה...",
     currentComposition: "הרכב נוכחי",
     targetComposition: "תמהיל יעד (AI)",
+    performanceTitle: "ביצועים היסטוריים מול מדדי ייחוס",
+    yourPortfolio: "התיק שלך",
     analysisTitle: "ניתוח התיק",
     runBtn: "הרץ ניתוח חדש",
     running: "מריץ ניתוח... (עד דקה)",
