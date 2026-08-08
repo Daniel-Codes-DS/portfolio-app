@@ -42,7 +42,8 @@ export default function CashRecommendation({ token, portfolioId = null, initialP
 
     try {
       const currentLang = localStorage.getItem("portfolio_app_lang") || "en";
-      const res = await fetch(`${import.meta.env.VITE_API_BASE}/recommendations/cash-allocation?lang=${currentLang}`, {
+      const apiBase = import.meta.env.VITE_API_BASE || "http://localhost:8000";
+      const res = await fetch(`${apiBase}/recommendations/cash-allocation?lang=${currentLang}`, {
         method: "POST",
         headers: {
           "Content-Type":    "application/json",
