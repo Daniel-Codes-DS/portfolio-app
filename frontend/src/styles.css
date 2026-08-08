@@ -20,6 +20,18 @@
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
+[data-theme="dark"] {
+  --paper: #121212;
+  --surface: #1e1e1e;
+  --hairline: #333333;
+  --ink: #e0e0e0;
+  --ink-soft: #a0a0a0;
+  --accent: #2abda8;
+  --accent-soft: #1b3834;
+  --danger: #e57373;
+  --danger-soft: #4a2323;
+}
+
 * {
   box-sizing: border-box;
 }

@@ -13,14 +13,17 @@ function AppContent() {
   const [loading, setLoading] = useState(true);
   const [selectedPortfolioId, setSelectedPortfolioId] = useState(null);
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [theme, setTheme] = useState(() => localStorage.getItem("portfolio_app_theme") || "light");
   const { lang, toggleLang, t, dir } = useLang();
 
   // Sync document direction/language with chosen lang on first render
   useEffect(() => {
     document.documentElement.setAttribute("dir", dir);
     document.documentElement.setAttribute("lang", lang);
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("portfolio_app_theme", theme);
     document.title = t("appName");
-  }, [lang, dir, t]);
+  }, [lang, dir, t, theme]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -112,6 +115,18 @@ function AppContent() {
           aria-label="Toggle language"
         >
           🌐 {t("nav.langToggle")}
+        </button>
+        
+        {/* Theme Toggle */}
+        <button
+          onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+          style={{
+            ...langBtnStyle,
+            marginInlineStart: "0.5rem",
+          }}
+          title="Toggle Theme"
+        >
+          {theme === "light" ? "🌙" : "☀️"}
         </button>
       </nav>
 
