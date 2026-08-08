@@ -21,6 +21,7 @@ export default function Dashboard({ token, onSelectPortfolio }) {
   const [loading, setLoading]       = useState(true);
   const [creating, setCreating]     = useState(false);
   const [error, setError]           = useState("");
+  const [selectedFile, setSelectedFile] = useState(null);
 
   useEffect(() => {
     load();
@@ -59,8 +60,19 @@ export default function Dashboard({ token, onSelectPortfolio }) {
     if (!newName.trim()) return;
     setCreating(true); setError("");
     try {
-      await api.createPortfolio(token, buildPayload());
-      setNewName(""); setProfile(EMPTY_PROFILE); setShowProfile(false);
+      const p = await api.createPortfolio(token, buildPayload());
+      
+      // If a file was selected, upload it immediately to the new portfolio
+      if (selectedFile && p && p.id) {
+        await api.uploadFile(token, p.id, selectedFile);
+      }
+
+      setNewName(""); setProfile(EMPTY_PROFILE); setShowProfile(false); setSelectedFile(null);
+      
+      // Reset file input element if possible
+      const fileInput = document.getElementById("dashboard-file-upload");
+      if (fileInput) fileInput.value = "";
+      
       await load();
     } catch (e) { setError(e.message); }
     finally { setCreating(false); }
@@ -88,6 +100,20 @@ export default function Dashboard({ token, onSelectPortfolio }) {
           <button type="submit" disabled={creating}>
             {creating ? t("dashboard.creating") : t("dashboard.createBtn")}
           </button>
+        </div>
+
+        <div className="inline-form" style={{ marginTop: "1rem" }}>
+          <label className="upload-button secondary" style={{ margin: 0, padding: "0.5rem 1rem", cursor: "pointer", display: "inline-block", backgroundColor: selectedFile ? "var(--accent)" : undefined, color: selectedFile ? "white" : undefined }}>
+            {selectedFile ? `📄 ${selectedFile.name}` : (t("dashboard.importCsv") || "Import CSV/Excel (Optional)")}
+            <input
+              id="dashboard-file-upload"
+              type="file"
+              accept=".csv,.xlsx,.xls"
+              onChange={(e) => setSelectedFile(e.target.files[0])}
+              disabled={creating}
+              hidden
+            />
+          </label>
         </div>
 
         <button
