@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "../api";
 import { useLang } from "../i18n/LangContext";
 import DisclaimerBanner from "../components/DisclaimerBanner";
+import PortfolioCompositionChart from "../components/PortfolioCompositionChart";
 
 export default function PortfolioDetail({ token, portfolioId, onBack }) {
   const { t, locale } = useLang();
@@ -146,8 +147,15 @@ export default function PortfolioDetail({ token, portfolioId, onBack }) {
                 <span className="metric-value">
                   {analysisResult.sharpe_ratio != null ? analysisResult.sharpe_ratio.toFixed(2) : "-"}
                 </span>
+                <p><strong>{t("portfolio.reportHhi")}:</strong> {(analysisResult.hhi_concentration || 0).toFixed(4)}</p>
               </div>
             </div>
+
+            {/* ── Charts: Current vs Target ── */}
+            <PortfolioCompositionChart 
+              currentHoldings={analysisResult.current_holdings || []}
+              targetWeights={analysisResult.target_weights || {}}
+            />
 
             {/* ── AI Analysis ── */}
             <div style={{ ...styles.sectionLabel, ...styles.aiLabel }}>

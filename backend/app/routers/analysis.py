@@ -137,6 +137,7 @@ def run_analysis(portfolio_id: str, request: Request, user=Depends(get_current_u
         "annual_vol":      _safe_float(m["annual_vol"]),
         "sharpe_ratio":    _safe_float(m["sharpe_ratio"]),
         "pdf_storage_path": pdf_path,
+        "current_holdings": m["summary_df"].to_dict("records"),
     }
 
 

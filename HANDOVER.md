@@ -32,3 +32,23 @@ To immediately track and alert the team on uncaught errors or LLM failures witho
 
 **Why:**
 Yahoo Finance API is very strict. If 100 users try to analyze portfolios with multiple assets, the backend would get blocked by Yahoo, resulting in failed analyses. The retry logic guarantees stability.
+
+## Legal Risk Reduction (Priority 4)
+**What was done:**
+1. Implemented a Consent Gate on the signup form. Users must explicitly check a box agreeing to a disclaimer before signing up. The consent version is saved in the database.
+2. Rewrote AI prompts in \i_analysis.py\. Renamed 'Recommendations' to 'Points for Consideration', enforced non-directive language (no 'buy/sell' commands), and added mandatory disclaimers for every point.
+3. Added a permanent (collapsible) Disclaimer Banner to the top of the \PortfolioDetail\ page.
+4. Visually separated Factual Data from AI Analysis in the UI.
+5. Updated Terms of Service to explicitly state the app has no financial licenses and provides no fiduciary duty.
+6. Added an audit log to \nalysis_runs\ to record which disclaimer version was shown when the analysis was generated.
+7. Fixed an UnboundLocalError bug related to \JSONResponse\ in the global exception handler.
+
+**Disclaimer**: These steps are technical risk-reduction measures, NOT formal legal advice or a substitute for proper regulatory compliance.
+
+## Advanced Health Check & Uptime Monitoring (Priority 5)
+**What was done:**
+1. Upgraded the \/health\ endpoint in \main.py\ to actively query Supabase. This ensures that a single ping keeps both the Render backend AND the Supabase database awake, preventing cold starts for both systems.
+2. Pushed the changes to GitHub.
+
+**Next Steps for User:**
+To completely eliminate cold starts, set up a free UptimeRobot account and configure it to ping \https://portfolio-app-backend-45n4.onrender.com/health\ every 14 minutes.

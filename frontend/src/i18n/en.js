@@ -165,6 +165,8 @@ export default {
     colPrice: "Avg. Price",
     uploadBtn: "Upload File (CSV / Excel / PDF / Image)",
     uploading: "Uploading...",
+    currentComposition: "Current Composition",
+    targetComposition: "Target (AI) Composition",
     analysisTitle: "Analysis",
     runBtn: "Run New Analysis",
     running: "Running analysis... (up to a minute)",
