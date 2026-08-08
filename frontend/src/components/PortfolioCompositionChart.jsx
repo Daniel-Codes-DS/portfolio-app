@@ -3,8 +3,16 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recha
 import { useLang } from "../i18n/LangContext";
 
 const COLORS = [
-  "#2abda8", "#1f7a6c", "#5b6b67", "#8c9b98", "#b4432e", 
-  "#e57373", "#ffb74d", "#ffd54f", "#81c784", "#4dd0e1"
+  "#1e3a8a", // Deep Navy
+  "#0f766e", // Teal / Emerald
+  "#b45309", // Bronze
+  "#475569", // Slate Gray
+  "#4338ca", // Indigo
+  "#0369a1", // Ocean Blue
+  "#b91c1c", // Deep Red
+  "#047857", // Forest Green
+  "#6d28d9", // Purple
+  "#334155"  // Dark Slate
 ];
 
 export default function PortfolioCompositionChart({ currentHoldings, targetWeights }) {

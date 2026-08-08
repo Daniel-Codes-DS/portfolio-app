@@ -59,8 +59,8 @@ export default function PerformanceChart({ performanceHistory }) {
           <Tooltip content={<CustomTooltip />} />
           <Legend wrapperStyle={{ paddingTop: "20px" }} />
           <Line type="monotone" dataKey="Portfolio" name={t("portfolio.yourPortfolio") || "Your Portfolio"} stroke="var(--accent)" strokeWidth={3} dot={false} />
-          <Line type="monotone" dataKey="S&P 500" stroke="#8884d8" strokeWidth={2} dot={false} />
-          <Line type="monotone" dataKey="TA-125" stroke="#ffc658" strokeWidth={2} dot={false} />
+          <Line type="monotone" dataKey="S&P 500" stroke="#475569" strokeWidth={2} dot={false} strokeDasharray="5 5" />
+          <Line type="monotone" dataKey="TA-125" stroke="#b45309" strokeWidth={2} dot={false} strokeDasharray="3 3" />
         </LineChart>
       </ResponsiveContainer>
     </div>

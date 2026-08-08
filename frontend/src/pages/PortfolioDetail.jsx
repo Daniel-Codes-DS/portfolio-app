@@ -158,7 +158,45 @@ export default function PortfolioDetail({ token, portfolioId, onBack }) {
               targetWeights={analysisResult.target_weights || {}}
             />
             
+            
             <PerformanceChart performanceHistory={analysisResult.performance_history || []} />
+
+            {/* ── Detailed Holdings Table ── */}
+            {analysisResult.current_holdings && analysisResult.current_holdings.length > 0 && (
+              <div style={{ marginTop: "2rem", overflowX: "auto" }}>
+                <h3 style={{ textAlign: "center", marginBottom: "1rem" }}>{t("portfolio.detailedHoldings") || "Detailed Holdings"}</h3>
+                <table className="holdings-table">
+                  <thead>
+                    <tr>
+                      <th>{t("portfolio.colTicker")}</th>
+                      <th>{t("portfolio.colQty")}</th>
+                      <th>{t("portfolio.currentPrice") || "Current Price"}</th>
+                      <th>{t("portfolio.currentValue") || "Value"}</th>
+                      <th>{t("portfolio.weight") || "Weight"}</th>
+                      <th>{t("portfolio.pnl") || "PnL"}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {analysisResult.current_holdings.map((h, i) => {
+                      const price = h.current_value / h.quantity;
+                      const isProfit = h.unrealized_pnl >= 0;
+                      return (
+                        <tr key={i}>
+                          <td style={{ fontWeight: 600 }}>{h.ticker}</td>
+                          <td>{h.quantity}</td>
+                          <td>{price.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                          <td>{h.current_value.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                          <td>{(h.weight * 100).toFixed(2)}%</td>
+                          <td style={{ color: isProfit ? "var(--accent)" : "var(--danger)", fontWeight: 500 }}>
+                            {isProfit ? "+" : ""}{h.unrealized_pnl.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
             {/* ── AI Insights ── */}
             <div style={{ ...styles.sectionLabel, ...styles.aiLabel }}>
