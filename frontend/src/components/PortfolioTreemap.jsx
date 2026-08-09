@@ -2,7 +2,7 @@ import React from "react";
 import { Treemap, ResponsiveContainer, Tooltip } from "recharts";
 import { useLang } from "../i18n/LangContext";
 
-const COLORS = ["#1976D2", "#388E3C", "#FBC02D", "#F57C00", "#7B1FA2", "#D32F2F", "#00796B"];
+const COLORS = ["#00F0FF", "#00FF88", "#B026FF", "#FF007F", "#FFEA00", "#FF4C4C", "#00D2FF"];
 
 const CustomContent = (props) => {
   const { root, depth, x, y, width, height, index, name, value } = props;
@@ -18,8 +18,8 @@ const CustomContent = (props) => {
         height={height}
         style={{
           fill: COLORS[index % COLORS.length],
-          stroke: "#2D3A50",
-          strokeWidth: 2,
+          stroke: "rgba(30, 35, 45, 0.8)",
+          strokeWidth: 3,
           strokeOpacity: 1,
         }}
       />

@@ -60,7 +60,7 @@ export default function PortfolioDetail({ token, portfolioId, onBack }) {
   const holdingsCount = portfolio?.holdings?.length || 0;
 
   return (
-    <div className="wyn-dashboard page-wide">
+    <div className="premium-dashboard page-wide">
       <header className="topbar">
         <button className="link-button" onClick={onBack}>
           &larr; {t("portfolio.back")}</button>
@@ -135,7 +135,7 @@ export default function PortfolioDetail({ token, portfolioId, onBack }) {
                 
                 <div className="metric">
                   <span className="metric-label">{t("portfolio.dividendYield") || "Yield Cost Ratio"}</span>
-                  <span className="metric-value" style={{ color: "#7AC142" }}>
+                  <span className="metric-value" style={{ color: "#00FF88", background: "none", WebkitTextFillColor: "#00FF88" }}>
                     {analysisResult.portfolio_dividend_yield != null 
                       ? `${(analysisResult.portfolio_dividend_yield * 100).toFixed(2)}%` 
                       : "-"}
@@ -144,7 +144,7 @@ export default function PortfolioDetail({ token, portfolioId, onBack }) {
                 
                 <div className="metric">
                   <span className="metric-label">{t("portfolio.annReturn") || "Annual Return"}</span>
-                  <span className="metric-value" style={{ color: analysisResult.annual_return > 0 ? "#7AC142" : "#FF5252" }}>
+                  <span className="metric-value" style={{ color: analysisResult.annual_return > 0 ? "#00FF88" : "#FF007F", background: "none", WebkitTextFillColor: analysisResult.annual_return > 0 ? "#00FF88" : "#FF007F" }}>
                     {analysisResult.annual_return != null
                       ? `${(analysisResult.annual_return * 100).toFixed(1)}%`
                       : "-"}
@@ -153,7 +153,7 @@ export default function PortfolioDetail({ token, portfolioId, onBack }) {
                 
                 <div className="metric">
                   <span className="metric-label">{t("portfolio.expenseRatio") || "Expense Ratio"}</span>
-                  <span className="metric-value" style={{ color: "#FFA726" }}>
+                  <span className="metric-value" style={{ color: "#00F0FF", background: "none", WebkitTextFillColor: "#00F0FF" }}>
                     {analysisResult.portfolio_expense_ratio != null 
                       ? `${(analysisResult.portfolio_expense_ratio * 100).toFixed(2)}%` 
                       : "-"}
@@ -213,11 +213,12 @@ export default function PortfolioDetail({ token, portfolioId, onBack }) {
                                 width: "10px", height: "10px", 
                                 borderRadius: "50%", 
                                 marginRight: "8px",
-                                background: isProfit ? "#7AC142" : "#FF5252" 
+                                background: isProfit ? "#00FF88" : "#FF007F",
+                                boxShadow: `0 0 8px ${isProfit ? "#00FF88" : "#FF007F"}`
                               }}></span>
                               {(h.weight * 100).toFixed(2)}%
                             </td>
-                            <td style={{ color: isProfit ? "#FFA726" : "#FF5252", fontWeight: 500 }}>
+                            <td style={{ color: isProfit ? "#00F0FF" : "#FF007F", fontWeight: 500 }}>
                               {isProfit ? "" : "$ ("}{Math.abs(h.unrealized_pnl).toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{isProfit ? "" : ")"}
                             </td>
                           </tr>

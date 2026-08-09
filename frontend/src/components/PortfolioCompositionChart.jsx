@@ -3,7 +3,7 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recha
 import { useLang } from "../i18n/LangContext";
 
 const COLORS = [
-  "#1976D2", "#388E3C", "#FBC02D", "#F57C00", "#7B1FA2", "#D32F2F", "#00796B"
+  "#00F0FF", "#00FF88", "#B026FF", "#FF007F", "#FFEA00", "#FF4C4C", "#00D2FF"
 ];
 
 export default function PortfolioCompositionChart({ currentHoldings, targetWeights }) {
@@ -54,8 +54,8 @@ export default function PortfolioCompositionChart({ currentHoldings, targetWeigh
               innerRadius={0}
               outerRadius={80}
               dataKey="value"
-              stroke="#3E516D"
-              strokeWidth={2}
+              stroke="rgba(30,35,45,0.8)"
+              strokeWidth={3}
             >
               {currentData.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={entry.color} />

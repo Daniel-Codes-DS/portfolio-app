@@ -41,7 +41,7 @@ export default function PerformanceChart({ performanceHistory }) {
       <div style={{ flex: 1, minHeight: 0 }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={performanceHistory} margin={{ top: 5, right: 30, left: 0, bottom: 25 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#4D6486" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
             <XAxis 
               dataKey="date" 
               stroke="#A0B2C6" 
@@ -57,9 +57,9 @@ export default function PerformanceChart({ performanceHistory }) {
               tickFormatter={(tick) => `$${tick.toLocaleString()}`} 
             />
             <Tooltip content={<CustomTooltip />} />
-            <Legend wrapperStyle={{ fontSize: "0.85rem", paddingTop: "10px" }} iconType="circle" />
-            <Line type="monotone" dataKey="portfolio_value" name={t("portfolio.yourPortfolio") || "Portfolio Value"} stroke="#FFA726" strokeWidth={3} dot={false} activeDot={{ r: 8 }} />
-            <Line type="monotone" dataKey="benchmark_value" name="Benchmark (S&P 500)" stroke="#7AC142" strokeWidth={3} dot={false} strokeDasharray="5 5" />
+            <Legend wrapperStyle={{ fontSize: "0.85rem", paddingTop: "10px", color: "#8b949e" }} iconType="circle" />
+            <Line type="monotone" dataKey="portfolio_value" name={t("portfolio.yourPortfolio") || "Portfolio Value"} stroke="#00F0FF" strokeWidth={3} dot={false} activeDot={{ r: 8, fill: "#00F0FF", stroke: "#fff", strokeWidth: 2 }} />
+            <Line type="monotone" dataKey="benchmark_value" name="Benchmark (S&P 500)" stroke="#00FF88" strokeWidth={3} dot={false} strokeDasharray="5 5" />
           </LineChart>
         </ResponsiveContainer>
       </div>

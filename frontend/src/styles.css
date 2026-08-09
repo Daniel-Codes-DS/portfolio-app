@@ -1,8 +1,7 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 /*
-  Design tokens - "פנקס פיננסי" (financial ledger) direction:
-  נייר קריר, לא קרמי-חמים (נמנעים מהקלישאה של cream+serif+terracotta).
-  ירוק-אזמרגד מרוסן לחיובי/פעולה, אדום-לבנה מרוסן לשלילי/שגיאה - סמנטיקה פיננסית, לא קישוט.
-  ספרות במרווח קבוע (tabular nums) כדי שטבלאות מספרים ייושרו כמו בפנקס אמיתי.
+  Design tokens - Premium UI
 */
 
 :root {
@@ -15,8 +14,8 @@
   --accent-soft: #e4efec;
   --danger: #b4432e;
   --danger-soft: #f6e9e6;
-  --radius: 10px;
-  --font-ui: "Heebo", "Segoe UI", system-ui, sans-serif;
+  --radius: 12px;
+  --font-ui: "Inter", "Heebo", "Segoe UI", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
@@ -431,92 +430,133 @@ button.link-button {
 }
 
 /* =========================================
-   Wyn Enterprise Replica Dashboard Styles
+   Premium Dark UI (Glassmorphism + Neon)
    ========================================= */
 
-.wyn-dashboard {
-  background: #32425B;
-  color: #FFFFFF;
+.premium-dashboard {
+  /* Deep, rich dark gradient background */
+  background: radial-gradient(circle at top left, #1a1e29 0%, #0d1117 100%);
+  color: #f0f6fc;
   min-height: 100vh;
   padding: 1.5rem;
+  font-family: 'Inter', sans-serif;
 }
 
-.wyn-dashboard .card,
-.wyn-dashboard .metric,
-.wyn-dashboard .holdings-table th,
-.wyn-dashboard .holdings-table td {
-  background: #3E516D !important;
-  color: #FFFFFF !important;
-  border: none !important;
-  box-shadow: none !important;
+/* Glassmorphism Cards */
+.premium-dashboard .card,
+.premium-dashboard .metric,
+.premium-dashboard .holdings-table th,
+.premium-dashboard .holdings-table td {
+  background: rgba(30, 35, 45, 0.4) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3) !important;
+  transition: all 0.3s ease;
 }
 
-.wyn-dashboard .metric {
-  padding: 1.5rem 1rem !important;
-  border-radius: 4px !important;
+.premium-dashboard .card:hover,
+.premium-dashboard .metric:hover {
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 240, 255, 0.05) !important;
+}
+
+.premium-dashboard .metric {
+  padding: 1.5rem 1.25rem !important;
+  border-radius: 12px !important;
   align-items: flex-start !important;
+  position: relative;
+  overflow: hidden;
 }
 
-.wyn-dashboard .metric::before {
-  display: none !important;
+/* Neon glow accent on top of metrics */
+.premium-dashboard .metric::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, #00F0FF, #00FF88);
+  opacity: 0.7;
 }
 
-.wyn-dashboard .metric-label {
-  color: #A0B2C6 !important;
+.premium-dashboard .metric-label {
+  color: #8b949e !important;
   font-size: 0.85rem !important;
-  text-transform: none !important;
-  letter-spacing: normal !important;
+  font-weight: 500 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
   margin-bottom: 0.5rem !important;
 }
 
-.wyn-dashboard .metric-value {
-  font-size: 1.8rem !important;
-  font-weight: 400 !important;
+.premium-dashboard .metric-value {
+  font-size: 2rem !important;
+  font-weight: 600 !important;
+  background: linear-gradient(180deg, #ffffff 0%, #c9d1d9 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-.wyn-dashboard .dashboard-grid {
-  gap: 1rem;
+.premium-dashboard .dashboard-grid {
+  gap: 1.5rem;
   grid-template-columns: 1fr;
 }
 
 @media (min-width: 1200px) {
-  .wyn-dashboard .dashboard-grid.top-row {
+  .premium-dashboard .dashboard-grid.top-row {
     grid-template-columns: 350px 1fr 350px;
   }
-  .wyn-dashboard .dashboard-grid.bottom-row {
+  .premium-dashboard .dashboard-grid.bottom-row {
     grid-template-columns: 350px 1fr;
-    margin-top: 1rem;
+    margin-top: 1.5rem;
   }
 }
 
-.wyn-dashboard h4, 
-.wyn-dashboard h3 {
-  color: #FFFFFF !important;
+.premium-dashboard h4, 
+.premium-dashboard h3 {
+  color: #f0f6fc !important;
   text-align: left !important;
-  font-size: 1rem !important;
-  font-weight: 400 !important;
-  margin-bottom: 1rem !important;
+  font-size: 1.1rem !important;
+  font-weight: 600 !important;
+  margin-bottom: 1.2rem !important;
   text-transform: none !important;
   letter-spacing: normal !important;
-  border-bottom: 1px solid #4D6486;
-  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 0.75rem;
 }
 
-.wyn-dashboard .holdings-table {
-  border: 1px solid #4D6486;
+.premium-dashboard .holdings-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
 }
 
-.wyn-dashboard .holdings-table th {
-  background: #3E516D !important;
+.premium-dashboard .holdings-table th {
+  background: rgba(20, 25, 35, 0.5) !important;
   text-align: left;
-  border-bottom: 2px solid #4D6486 !important;
-  text-transform: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
   font-size: 0.85rem;
-  padding: 0.75rem;
+  font-weight: 600;
+  padding: 1rem;
+  color: #8b949e !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-.wyn-dashboard .holdings-table td {
-  border-bottom: 1px solid #4D6486 !important;
-  padding: 0.75rem;
-  font-size: 0.85rem;
+.premium-dashboard .holdings-table td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+  padding: 1rem;
+  font-size: 0.9rem;
+  font-weight: 400;
+}
+
+.premium-dashboard .holdings-table tr:hover td {
+  background: rgba(255, 255, 255, 0.03) !important;
+}
+
+/* Rebalancing Simulator Overrides */
+.premium-dashboard .rebalancing-card {
+  margin-top: 1.5rem;
 }
