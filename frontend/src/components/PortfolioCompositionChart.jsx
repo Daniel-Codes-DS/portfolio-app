@@ -52,7 +52,7 @@ export default function PortfolioCompositionChart({ currentHoldings, targetWeigh
   };
 
   return (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", justifyContent: "space-between", marginTop: "1rem", background: "var(--paper)", padding: "1.5rem", borderRadius: "8px", border: "1px solid var(--hairline)", boxShadow: "inset 0 2px 4px rgba(0,0,0,0.02)" }}>
+    <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", justifyContent: "space-between", background: "var(--paper)", padding: "1.5rem", borderRadius: "8px", border: "1px solid var(--hairline)", boxShadow: "inset 0 2px 4px rgba(0,0,0,0.02)", height: "100%", minHeight: "400px" }}>
       <div style={{ width: "100%", flex: "1 1 300px", minWidth: "300px", height: "320px" }}>
         <h4 style={{ textAlign: "center", marginBottom: "0.5rem", color: "var(--ink-soft)", textTransform: "uppercase", fontSize: "0.8rem", letterSpacing: "0.05em" }}>{t("portfolio.currentComposition") || "Current Composition"}</h4>
         <ResponsiveContainer width="100%" height="100%">

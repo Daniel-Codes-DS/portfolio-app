@@ -36,7 +36,7 @@ export default function PerformanceChart({ performanceHistory }) {
   };
 
   return (
-    <div style={{ width: "100%", height: "400px", marginTop: "2rem", background: "var(--paper)", padding: "1.5rem", borderRadius: "8px", border: "1px solid var(--hairline)", boxShadow: "inset 0 2px 4px rgba(0,0,0,0.02)" }}>
+    <div style={{ width: "100%", height: "100%", minHeight: "400px", background: "var(--paper)", padding: "1.5rem", borderRadius: "8px", border: "1px solid var(--hairline)", boxShadow: "inset 0 2px 4px rgba(0,0,0,0.02)" }}>
       <h3 style={{ textAlign: "center", marginBottom: "1rem", color: "var(--ink-soft)", textTransform: "uppercase", fontSize: "0.85rem", letterSpacing: "0.05em" }}>{t("portfolio.performanceTitle") || "Historical Performance vs Benchmarks"}</h3>
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={performanceHistory} margin={{ top: 5, right: 30, left: 0, bottom: 25 }}>

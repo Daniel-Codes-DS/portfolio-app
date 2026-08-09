@@ -58,9 +58,10 @@ export default function PortfolioDetail({ token, portfolioId, onBack }) {
   const holdingsCount = portfolio?.holdings?.length || 0;
 
   return (
-    <div className="page">
+    <div className="page-wide">
       <header className="topbar">
-        <button className="secondary" onClick={onBack}>{t("portfolio.back")}</button>
+        <button className="link-button" onClick={onBack}>
+          &larr; {t("portfolio.back")}</button>
         <h1>{portfolio?.name}</h1>
       </header>
 
@@ -167,18 +168,18 @@ export default function PortfolioDetail({ token, portfolioId, onBack }) {
               </div>
             </div>
 
-            {/* ── Charts: Current vs Target ── */}
-            <PortfolioCompositionChart 
-              currentHoldings={analysisResult.current_holdings || []}
-              targetWeights={analysisResult.target_weights || {}}
-            />
-            
-            
-            <PerformanceChart performanceHistory={analysisResult.performance_history || []} />
+            {/* ── Dashboard Grid for Charts ── */}
+            <div className="dashboard-grid">
+              <PortfolioCompositionChart 
+                currentHoldings={analysisResult.current_holdings || []}
+                targetWeights={analysisResult.target_weights || {}}
+              />
+              <PerformanceChart performanceHistory={analysisResult.performance_history || []} />
+            </div>
 
             {/* ── Detailed Holdings Table ── */}
             {analysisResult.current_holdings && analysisResult.current_holdings.length > 0 && (
-              <div style={{ marginTop: "2rem", overflowX: "auto" }}>
+              <div className="dashboard-full-width" style={{ marginTop: "2rem", overflowX: "auto" }}>
                 <h3 style={{ textAlign: "center", marginBottom: "1rem" }}>{t("portfolio.detailedHoldings") || "Detailed Holdings"}</h3>
                 <table className="holdings-table">
                   <thead>

@@ -84,6 +84,12 @@ h2 {
   padding: 1.5rem 1.25rem 4rem;
 }
 
+.page-wide {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 4rem;
+}
+
 .topbar {
   display: flex;
   align-items: center;
@@ -305,7 +311,21 @@ button.link-button {
   text-align: center;
 }
 
-/* ---------- Analysis result ---------- */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .dashboard-full-width {
+    grid-column: 1 / -1;
+  }
+}
 
 .metrics-row {
   display: grid;
