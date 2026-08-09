@@ -117,6 +117,8 @@ def run_analysis(portfolio_id: str, request: Request, user=Depends(get_current_u
         "annual_vol":      _safe_float(m["annual_vol"]),
         "sharpe_ratio":    _safe_float(m["sharpe_ratio"]),
         "hhi_concentration": _safe_float(m["hhi_concentration"]),
+        "portfolio_dividend_yield": _safe_float(m.get("portfolio_dividend_yield")),
+        "portfolio_expense_ratio": _safe_float(m.get("portfolio_expense_ratio")),
         "report_text":     ai_result["report_text"],
         "target_weights":  ai_result["target_weights"],
         "pdf_storage_path": pdf_path,
