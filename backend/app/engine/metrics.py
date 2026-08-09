@@ -29,7 +29,20 @@ def fetch_price_history(tickers, period=LOOKBACK_PERIOD):
     return data
 
 
+TICKER_ALIASES = {
+    "S&P500": "SPY",
+    "S&P 500": "SPY",
+    "SP500": "SPY",
+    "NASDAQ": "QQQ",
+    "DOW": "DIA",
+    "TA35": "TA35.TA",
+    "TA125": "TA125.TA"
+}
+
 def compute_metrics(portfolio_df):
+    # Normalize tickers using aliases to support common index/ETF names
+    portfolio_df["ticker"] = portfolio_df["ticker"].apply(lambda t: TICKER_ALIASES.get(str(t).strip().upper(), str(t).strip().upper()) if pd.notna(t) else t)
+    
     manual_mask = portfolio_df["value_override"].notna()
     auto_tickers = portfolio_df.loc[~manual_mask, "ticker"].unique().tolist()
 
