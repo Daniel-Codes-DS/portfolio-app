@@ -53,11 +53,26 @@ def compute_metrics(portfolio_df):
             else:
                 ann_return, ann_vol = np.nan, np.nan
         cost_basis = qty * r["avg_price"]
+        
+        # Try fetching additional metadata: dividend yield & expense ratio
+        div_yield, expense_ratio = 0.0, 0.0
+        try:
+            # We do a separate fast fetch since it requires info, which isn't returned by yf.download
+            ticker_obj = yf.Ticker(ticker)
+            info = ticker_obj.info
+            if info:
+                div_yield = info.get("dividendYield", 0) or 0
+                expense_ratio = info.get("netExpenseRatio", 0) or info.get("annualReportExpenseRatio", 0) or 0
+        except Exception:
+            pass
+            
         rows.append({
             "ticker": ticker, "quantity": qty, "current_value": value, "cost_basis": cost_basis,
             "unrealized_pnl": (value - cost_basis) if pd.notna(value) else np.nan,
             "annual_return_hist": ann_return, "annual_vol_hist": ann_vol,
             "asset_type": r["asset_type"],
+            "dividend_yield": div_yield,
+            "expense_ratio": expense_ratio
         })
 
     summary_df = pd.DataFrame(rows)
@@ -80,6 +95,10 @@ def compute_metrics(portfolio_df):
     ann_return_port = port_returns.mean() * 252 if not port_returns.empty else np.nan
     ann_vol_port = port_returns.std() * np.sqrt(252) if not port_returns.empty else np.nan
     sharpe_port = ann_return_port / ann_vol_port if pd.notna(ann_vol_port) and ann_vol_port > 0 else np.nan
+
+    # Calculate portfolio-level dividend and fee
+    port_dividend_yield = (summary_df["dividend_yield"] * summary_df["weight"]).sum() if "dividend_yield" in summary_df else 0
+    port_expense_ratio = (summary_df["expense_ratio"] * summary_df["weight"]).sum() if "expense_ratio" in summary_df else 0
 
     hhi = (summary_df["weight"] ** 2).sum()
     corr_matrix = daily_returns[valid_tickers].corr() if len(valid_tickers) > 1 else None
@@ -105,6 +124,8 @@ def compute_metrics(portfolio_df):
         "annual_return": ann_return_port,
         "annual_vol": ann_vol_port,
         "sharpe_ratio": sharpe_port,
+        "portfolio_dividend_yield": port_dividend_yield,
+        "portfolio_expense_ratio": port_expense_ratio,
         "hhi_concentration": hhi,
         "corr_matrix": corr_matrix,
         "performance_history": performance_history,

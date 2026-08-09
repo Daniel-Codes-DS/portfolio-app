@@ -136,6 +136,8 @@ def run_analysis(portfolio_id: str, request: Request, user=Depends(get_current_u
         "annual_return":   _safe_float(m["annual_return"]),
         "annual_vol":      _safe_float(m["annual_vol"]),
         "sharpe_ratio":    _safe_float(m["sharpe_ratio"]),
+        "portfolio_dividend_yield": _safe_float(m.get("portfolio_dividend_yield")),
+        "portfolio_expense_ratio": _safe_float(m.get("portfolio_expense_ratio")),
         "pdf_storage_path": pdf_path,
         "current_holdings": m["summary_df"].to_dict("records"),
         "performance_history": m.get("performance_history", []),

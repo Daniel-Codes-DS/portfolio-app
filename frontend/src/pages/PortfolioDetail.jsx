@@ -148,7 +148,22 @@ export default function PortfolioDetail({ token, portfolioId, onBack }) {
                 <span className="metric-value">
                   {analysisResult.sharpe_ratio != null ? analysisResult.sharpe_ratio.toFixed(2) : "-"}
                 </span>
-                <p><strong>{t("portfolio.reportHhi")}:</strong> {(analysisResult.hhi_concentration || 0).toFixed(4)}</p>
+              </div>
+              <div className="metric">
+                <span className="metric-label">{t("portfolio.dividendYield") || "Div. Yield"}</span>
+                <span className="metric-value" style={{ color: "var(--accent)" }}>
+                  {analysisResult.portfolio_dividend_yield != null 
+                    ? `${(analysisResult.portfolio_dividend_yield * 100).toFixed(2)}%` 
+                    : "-"}
+                </span>
+              </div>
+              <div className="metric">
+                <span className="metric-label">{t("portfolio.expenseRatio") || "Expense Ratio"}</span>
+                <span className="metric-value" style={{ color: "var(--danger)" }}>
+                  {analysisResult.portfolio_expense_ratio != null 
+                    ? `${(analysisResult.portfolio_expense_ratio * 100).toFixed(2)}%` 
+                    : "-"}
+                </span>
               </div>
             </div>
 
