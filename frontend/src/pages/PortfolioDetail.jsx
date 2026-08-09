@@ -4,6 +4,7 @@ import { useLang } from "../i18n/LangContext";
 import DisclaimerBanner from "../components/DisclaimerBanner";
 import PortfolioCompositionChart from "../components/PortfolioCompositionChart";
 import PerformanceChart from "../components/PerformanceChart";
+import RebalancingSimulator from "../components/RebalancingSimulator";
 
 export default function PortfolioDetail({ token, portfolioId, onBack }) {
   const { t, locale } = useLang();
@@ -227,6 +228,15 @@ export default function PortfolioDetail({ token, portfolioId, onBack }) {
           </div>
         )}
       </section>
+
+      {/* ── Rebalancing Simulator ── */}
+      {analysisResult && (
+        <RebalancingSimulator
+          currentHoldings={analysisResult.current_holdings || []}
+          targetWeights={analysisResult.target_weights || {}}
+          totalValue={analysisResult.total_value}
+        />
+      )}
 
       {/* History */}
       <section className="card">
