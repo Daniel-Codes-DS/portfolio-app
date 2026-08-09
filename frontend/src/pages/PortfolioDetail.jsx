@@ -60,7 +60,7 @@ export default function PortfolioDetail({ token, portfolioId, onBack }) {
   const holdingsCount = portfolio?.holdings?.length || 0;
 
   return (
-    <div className={analysisResult ? "premium-dashboard page-wide" : "page-wide"}>
+    <div className={analysisResult ? "premium-dashboard page-wide" : "page-wide force-white-bg"}>
       <header className="topbar">
         <button className="link-button" onClick={onBack}>
           &larr; {t("portfolio.back")}</button>
@@ -235,7 +235,7 @@ export default function PortfolioDetail({ token, portfolioId, onBack }) {
               <span style={styles.sectionIcon}>🤖</span>
               <span>{t("disclaimer.aiLabel")}</span>
             </div>
-            <pre className="report-text" style={{ background: "#ffffff", color: "#12202b", border: "1px solid #dde3e0", textShadow: "none" }}>{analysisResult.report_text}</pre>
+            <pre className="report-text white-report">{analysisResult.report_text}</pre>
 
             <button className="secondary" onClick={() => handleDownloadPdf(analysisResult.analysis_id)}>
               {t("portfolio.downloadPdf")}

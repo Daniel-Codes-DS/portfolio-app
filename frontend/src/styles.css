@@ -433,6 +433,32 @@ button.link-button {
    Premium Dark UI (Glassmorphism + Neon)
    ========================================= */
 
+.force-white-bg {
+  background-color: #ffffff !important;
+  color: #12202b !important;
+  min-height: 100vh;
+}
+
+.force-white-bg .card {
+  background-color: #ffffff !important;
+  color: #12202b !important;
+  border: 1px solid #dde3e0 !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;
+}
+
+.force-white-bg h1, 
+.force-white-bg h2, 
+.force-white-bg p {
+  color: #12202b !important;
+}
+
+.white-report {
+  background-color: #ffffff !important;
+  color: #12202b !important;
+  border: 1px solid #dde3e0 !important;
+  text-shadow: none !important;
+}
+
 .premium-dashboard {
   /* Deep, rich dark gradient background */
   background: radial-gradient(circle at top left, #1a1e29 0%, #0d1117 100%);
