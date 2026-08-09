@@ -2,12 +2,12 @@ import React from "react";
 import { Treemap, ResponsiveContainer, Tooltip } from "recharts";
 import { useLang } from "../i18n/LangContext";
 
-const COLORS = ["#00F0FF", "#00FF88", "#B026FF", "#FF007F", "#FFEA00", "#FF4C4C", "#00D2FF"];
+const COLORS = ["#1E3A8A", "#374151", "#B45309", "#047857", "#4338CA", "#0F766E", "#6D28D9"];
 
 const CustomContent = (props) => {
   const { root, depth, x, y, width, height, index, name, value } = props;
   
-  if (width < 30 || height < 30) return null; // Don't render text if box is too small
+  if (width < 20 || height < 20) return null; // Don't render text if box is too small
 
   return (
     <g>
@@ -19,27 +19,31 @@ const CustomContent = (props) => {
         style={{
           fill: COLORS[index % COLORS.length],
           stroke: "rgba(30, 35, 45, 0.8)",
-          strokeWidth: 3,
+          strokeWidth: 2,
           strokeOpacity: 1,
         }}
       />
       <text
-        x={x + 4}
-        y={y + 18}
+        x={x + width / 2}
+        y={y + height / 2 + (height > 40 ? -6 : 0)}
+        textAnchor="middle"
+        dominantBaseline="central"
         fill="#fff"
         fontSize={12}
         fillOpacity={0.9}
-        style={{ pointerEvents: "none", fontFamily: "sans-serif" }}
+        style={{ pointerEvents: "none", fontFamily: "sans-serif", fontWeight: 500 }}
       >
         {name}
       </text>
       {height > 40 && (
         <text
-          x={x + 4}
-          y={y + 34}
+          x={x + width / 2}
+          y={y + height / 2 + 10}
+          textAnchor="middle"
+          dominantBaseline="central"
           fill="#fff"
-          fontSize={11}
-          fillOpacity={0.6}
+          fontSize={10}
+          fillOpacity={0.7}
           style={{ pointerEvents: "none", fontFamily: "sans-serif" }}
         >
           {`(${value})`}
