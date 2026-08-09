@@ -51,4 +51,22 @@ Yahoo Finance API is very strict. If 100 users try to analyze portfolios with mu
 2. Pushed the changes to GitHub.
 
 **Next Steps for User:**
-To completely eliminate cold starts, set up a free UptimeRobot account and configure it to ping \https://portfolio-app-backend-45n4.onrender.com/health\ every 14 minutes.
+To completely eliminate cold starts, set up a free UptimeRobot account and configure it to ping `https://portfolio-app-backend-45n4.onrender.com/health` every 14 minutes.
+
+## Priority 6: UI Overhaul & Advanced Analytics
+**What was done:**
+1. **Premium Dark Mode (Glassmorphism):** Completely overhauled `styles.css` to use a modern, dark "glassmorphism" aesthetic (`premium-dashboard`) with neon-tinted typography, blurry translucent cards, and a deep radial background.
+2. **Dynamic UI Rendering:** Configured `PortfolioDetail.jsx` to show a clean white background *before* analysis, and automatically transition into the Premium Dark Mode once the AI Analysis finishes.
+3. **Advanced Visualizations (Recharts):**
+   - Refactored `PerformanceChart.jsx` to match the dark theme and neon accents.
+   - Simplified `PortfolioCompositionChart.jsx` into a single, corporate-palette Pie Chart showing country/asset exposure.
+   - Built a brand new `PortfolioTreemap.jsx` component to visualize stock allocation by sector/shares in a dynamic, space-filling grid (matching Wyn Enterprise aesthetics).
+4. **New Backend Analytics:** 
+   - Integrated `dividendYield` and `expenseRatio` pulling from `yfinance`.
+   - Updated the Supabase `analysis_runs` schema to persist `portfolio_dividend_yield` and `portfolio_expense_ratio`.
+   - Built a robust ticker aliasing mechanism (`TICKER_ALIASES` in `metrics.py`) to prevent backend crashes when users manually type common indices (e.g. mapping `S&P500` -> `SPY`, `NASDAQ` -> `QQQ`, `TA35` -> `TA35.TA`).
+5. **Rebalancing Simulator:** Added a frontend component (`RebalancingSimulator.jsx`) that reads the AI's target weights and tells the user exactly how many shares to buy/sell to achieve optimal allocation.
+6. Pushed all changes to GitHub.
+
+**Why:**
+To elevate the product from a basic prototype to an ultra-premium, "WOW"-factor fintech dashboard (Bloomberg Terminal / Wyn Enterprise tier) that builds instant trust, while fixing edge-case crashes when users try to analyze indices or ETFs.
