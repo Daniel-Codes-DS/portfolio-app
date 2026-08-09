@@ -51,9 +51,24 @@ export default function PortfolioCompositionChart({ currentHoldings, targetWeigh
     return null;
   };
 
+  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, name }) => {
+    if (percent < 0.05) return null; // Don't show label for tiny slices (< 5%)
+    
+    const RADIAN = Math.PI / 180;
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+    return (
+      <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize={11} fontWeight={600}>
+        {name}
+      </text>
+    );
+  };
+
   return (
     <div style={{ display: "flex", flexWrap: "wrap", gap: "2rem", justifyContent: "space-around", marginTop: "1rem" }}>
-      <div style={{ width: "100%", maxWidth: "400px", height: "300px" }}>
+      <div style={{ width: "100%", maxWidth: "450px", height: "350px" }}>
         <h4 style={{ textAlign: "center", marginBottom: "0.5rem" }}>{t("portfolio.currentComposition") || "Current Composition"}</h4>
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
@@ -67,18 +82,19 @@ export default function PortfolioCompositionChart({ currentHoldings, targetWeigh
               dataKey="value"
               stroke="var(--surface)"
               strokeWidth={2}
+              label={renderCustomizedLabel}
+              labelLine={false}
             >
               {currentData.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={entry.color} />
               ))}
             </Pie>
             <Tooltip content={<CustomTooltip />} />
-            <Legend />
           </PieChart>
         </ResponsiveContainer>
       </div>
 
-      <div style={{ width: "100%", maxWidth: "400px", height: "300px" }}>
+      <div style={{ width: "100%", maxWidth: "450px", height: "350px" }}>
         <h4 style={{ textAlign: "center", marginBottom: "0.5rem" }}>{t("portfolio.targetComposition") || "Target Composition"}</h4>
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
@@ -92,13 +108,14 @@ export default function PortfolioCompositionChart({ currentHoldings, targetWeigh
               dataKey="value"
               stroke="var(--surface)"
               strokeWidth={2}
+              label={renderCustomizedLabel}
+              labelLine={false}
             >
               {targetData.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={entry.color} />
               ))}
             </Pie>
             <Tooltip content={<CustomTooltip />} />
-            <Legend />
           </PieChart>
         </ResponsiveContainer>
       </div>
