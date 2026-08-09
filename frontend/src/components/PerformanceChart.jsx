@@ -36,33 +36,33 @@ export default function PerformanceChart({ performanceHistory }) {
   };
 
   return (
-    <div style={{ width: "100%", height: "100%", minHeight: "400px", background: "var(--paper)", padding: "1.5rem", borderRadius: "8px", border: "1px solid var(--hairline)", boxShadow: "inset 0 2px 4px rgba(0,0,0,0.02)" }}>
-      <h3 style={{ textAlign: "center", marginBottom: "1rem", color: "var(--ink-soft)", textTransform: "uppercase", fontSize: "0.85rem", letterSpacing: "0.05em" }}>{t("portfolio.performanceTitle") || "Historical Performance vs Benchmarks"}</h3>
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={performanceHistory} margin={{ top: 5, right: 30, left: 0, bottom: 25 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--hairline)" vertical={false} />
-          <XAxis 
-            dataKey="date" 
-            stroke="var(--ink-soft)" 
-            tick={{ fill: "var(--ink-soft)", fontSize: 12 }} 
-            tickFormatter={(tick) => {
-              // Simplify date label to Month-Year
-              const d = new Date(tick);
-              return `${d.getMonth()+1}/${d.getFullYear()}`;
-            }}
-          />
-          <YAxis 
-            tickFormatter={formatPercent} 
-            stroke="var(--ink-soft)" 
-            tick={{ fill: "var(--ink-soft)", fontSize: 12 }} 
-          />
-          <Tooltip content={<CustomTooltip />} />
-          <Legend wrapperStyle={{ paddingTop: "20px" }} iconType="circle" />
-          <Line type="monotone" dataKey="Portfolio" name={t("portfolio.yourPortfolio") || "Your Portfolio"} stroke="var(--accent)" strokeWidth={3} dot={false} />
-          <Line type="monotone" dataKey="S&P 500" stroke="#475569" strokeWidth={2} dot={false} strokeDasharray="5 5" />
-          <Line type="monotone" dataKey="TA-125" stroke="#b45309" strokeWidth={2} dot={false} strokeDasharray="3 3" />
-        </LineChart>
-      </ResponsiveContainer>
+    <div className="card" style={{ width: "100%", height: "100%", minHeight: "400px", display: "flex", flexDirection: "column" }}>
+      <h3 style={{ margin: 0, padding: "1rem" }}>{t("portfolio.performanceTitle") || "Historical Performance vs Benchmarks"}</h3>
+      <div style={{ flex: 1, minHeight: 0 }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={performanceHistory} margin={{ top: 5, right: 30, left: 0, bottom: 25 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#4D6486" vertical={false} />
+            <XAxis 
+              dataKey="date" 
+              stroke="#A0B2C6" 
+              tick={{ fill: "#A0B2C6", fontSize: 12 }} 
+              tickFormatter={(tick) => {
+                const d = new Date(tick);
+                return `${d.getMonth()+1}/${d.getFullYear()}`;
+              }}
+            />
+            <YAxis 
+              stroke="#A0B2C6" 
+              tick={{ fill: "#A0B2C6", fontSize: 12 }} 
+              tickFormatter={(tick) => `$${tick.toLocaleString()}`} 
+            />
+            <Tooltip content={<CustomTooltip />} />
+            <Legend wrapperStyle={{ fontSize: "0.85rem", paddingTop: "10px" }} iconType="circle" />
+            <Line type="monotone" dataKey="portfolio_value" name={t("portfolio.yourPortfolio") || "Portfolio Value"} stroke="#FFA726" strokeWidth={3} dot={false} activeDot={{ r: 8 }} />
+            <Line type="monotone" dataKey="benchmark_value" name="Benchmark (S&P 500)" stroke="#7AC142" strokeWidth={3} dot={false} strokeDasharray="5 5" />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 }

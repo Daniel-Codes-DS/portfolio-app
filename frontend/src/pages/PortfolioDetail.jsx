@@ -4,6 +4,7 @@ import { useLang } from "../i18n/LangContext";
 import DisclaimerBanner from "../components/DisclaimerBanner";
 import PortfolioCompositionChart from "../components/PortfolioCompositionChart";
 import PerformanceChart from "../components/PerformanceChart";
+import PortfolioTreemap from "../components/PortfolioTreemap";
 import RebalancingSimulator from "../components/RebalancingSimulator";
 
 export default function PortfolioDetail({ token, portfolioId, onBack }) {
@@ -59,7 +60,7 @@ export default function PortfolioDetail({ token, portfolioId, onBack }) {
   const holdingsCount = portfolio?.holdings?.length || 0;
 
   return (
-    <div className="page-wide">
+    <div className="wyn-dashboard page-wide">
       <header className="topbar">
         <button className="link-button" onClick={onBack}>
           &larr; {t("portfolio.back")}</button>
@@ -117,101 +118,114 @@ export default function PortfolioDetail({ token, portfolioId, onBack }) {
 
         {analysisResult && (
           <div className="analysis-result">
-            {/* ── Factual Data ── */}
-            <div style={styles.sectionLabel}>
-              <span style={styles.sectionIcon}>📊</span>
-              <span>{t("disclaimer.factsLabel")}</span>
-            </div>
-            <div className="metrics-row">
-              <div className="metric">
-                <span className="metric-label">{t("portfolio.portfolioValue")}</span>
-                <span className="metric-value">
-                  {analysisResult.total_value?.toLocaleString(locale)}
-                </span>
+            {/* ── Dashboard Grid: Top Row ── */}
+            <div className="dashboard-grid top-row">
+              {/* Left Column: KPIs */}
+              <div className="kpi-column" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                <div style={{ gridColumn: "1 / -1" }}>
+                  <h3 style={{ margin: 0, paddingBottom: "1rem" }}>Portfolio Activity Summary</h3>
+                </div>
+                
+                <div className="metric">
+                  <span className="metric-label">{t("portfolio.portfolioValue")}</span>
+                  <span className="metric-value">
+                    ${analysisResult.total_value?.toLocaleString(locale, { maximumFractionDigits: 0 })}
+                  </span>
+                </div>
+                
+                <div className="metric">
+                  <span className="metric-label">{t("portfolio.dividendYield") || "Yield Cost Ratio"}</span>
+                  <span className="metric-value" style={{ color: "#7AC142" }}>
+                    {analysisResult.portfolio_dividend_yield != null 
+                      ? `${(analysisResult.portfolio_dividend_yield * 100).toFixed(2)}%` 
+                      : "-"}
+                  </span>
+                </div>
+                
+                <div className="metric">
+                  <span className="metric-label">{t("portfolio.annReturn") || "Annual Return"}</span>
+                  <span className="metric-value" style={{ color: analysisResult.annual_return > 0 ? "#7AC142" : "#FF5252" }}>
+                    {analysisResult.annual_return != null
+                      ? `${(analysisResult.annual_return * 100).toFixed(1)}%`
+                      : "-"}
+                  </span>
+                </div>
+                
+                <div className="metric">
+                  <span className="metric-label">{t("portfolio.expenseRatio") || "Expense Ratio"}</span>
+                  <span className="metric-value" style={{ color: "#FFA726" }}>
+                    {analysisResult.portfolio_expense_ratio != null 
+                      ? `${(analysisResult.portfolio_expense_ratio * 100).toFixed(2)}%` 
+                      : "-"}
+                  </span>
+                </div>
               </div>
-              <div className="metric">
-                <span className="metric-label">{t("portfolio.annReturn")}</span>
-                <span
-                  className="metric-value"
-                  style={{
-                    color:
-                      analysisResult.annual_return > 0 ? "var(--accent)"
-                      : analysisResult.annual_return < 0 ? "var(--danger)"
-                      : undefined,
-                  }}
-                >
-                  {analysisResult.annual_return != null
-                    ? `${(analysisResult.annual_return * 100).toFixed(1)}%`
-                    : "-"}
-                </span>
-              </div>
-              <div className="metric">
-                <span className="metric-label">{t("portfolio.sharpe")}</span>
-                <span className="metric-value">
-                  {analysisResult.sharpe_ratio != null ? analysisResult.sharpe_ratio.toFixed(2) : "-"}
-                </span>
-              </div>
-              <div className="metric">
-                <span className="metric-label">{t("portfolio.dividendYield") || "Div. Yield"}</span>
-                <span className="metric-value" style={{ color: "var(--accent)" }}>
-                  {analysisResult.portfolio_dividend_yield != null 
-                    ? `${(analysisResult.portfolio_dividend_yield * 100).toFixed(2)}%` 
-                    : "-"}
-                </span>
-              </div>
-              <div className="metric">
-                <span className="metric-label">{t("portfolio.expenseRatio") || "Expense Ratio"}</span>
-                <span className="metric-value" style={{ color: "var(--danger)" }}>
-                  {analysisResult.portfolio_expense_ratio != null 
-                    ? `${(analysisResult.portfolio_expense_ratio * 100).toFixed(2)}%` 
-                    : "-"}
-                </span>
-              </div>
-            </div>
 
-            {/* ── Dashboard Grid for Charts ── */}
-            <div className="dashboard-grid">
+              {/* Middle Column: Performance / Bar Chart */}
+              <PerformanceChart performanceHistory={analysisResult.performance_history || []} />
+
+              {/* Right Column: Pie Chart (Country Exposure / Target) */}
               <PortfolioCompositionChart 
                 currentHoldings={analysisResult.current_holdings || []}
                 targetWeights={analysisResult.target_weights || {}}
               />
-              <PerformanceChart performanceHistory={analysisResult.performance_history || []} />
             </div>
 
-            {/* ── Detailed Holdings Table ── */}
+            {/* ── Dashboard Grid: Bottom Row ── */}
             {analysisResult.current_holdings && analysisResult.current_holdings.length > 0 && (
-              <div className="dashboard-full-width" style={{ marginTop: "2rem", overflowX: "auto" }}>
-                <h3 style={{ textAlign: "center", marginBottom: "1rem" }}>{t("portfolio.detailedHoldings") || "Detailed Holdings"}</h3>
-                <table className="holdings-table">
-                  <thead>
-                    <tr>
-                      <th>{t("portfolio.colTicker")}</th>
-                      <th>{t("portfolio.colQty")}</th>
-                      <th>{t("portfolio.currentPrice") || "Current Price"}</th>
-                      <th>{t("portfolio.currentValue") || "Value"}</th>
-                      <th>{t("portfolio.weight") || "Weight"}</th>
-                      <th>{t("portfolio.pnl") || "PnL"}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {analysisResult.current_holdings.map((h, i) => {
-                      const price = h.current_value / h.quantity;
-                      const isProfit = h.unrealized_pnl >= 0;
-                      return (
-                        <tr key={i}>
-                          <td style={{ fontWeight: 600 }}>{h.ticker}</td>
-                          <td>{h.quantity}</td>
-                          <td>{price.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                          <td>{h.current_value.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                          <td>{(h.weight * 100).toFixed(2)}%</td>
-                          <td style={{ color: isProfit ? "var(--accent)" : "var(--danger)", fontWeight: 500 }}>
-                            {isProfit ? "+" : ""}{h.unrealized_pnl.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+              <div className="dashboard-grid bottom-row">
+                
+                {/* Treemap Container Placeholder (To be implemented) */}
+                <div className="card" style={{ padding: 0 }}>
+                  <h3 style={{ padding: "1rem", margin: 0 }}>Allocation - Sector (Shares)</h3>
+                  <div id="treemap-container">
+                    <PortfolioTreemap holdings={analysisResult.current_holdings} />
+                  </div>
+                </div>
+
+                {/* Sector Summary Table */}
+                <div className="card" style={{ overflowX: "auto", padding: 0 }}>
+                  <h3 style={{ padding: "1rem", margin: 0 }}>Sector Summary</h3>
+                  <table className="holdings-table" style={{ width: "100%", borderCollapse: "collapse" }}>
+                    <thead>
+                      <tr>
+                        <th>Sector / {t("portfolio.colTicker")}</th>
+                        <th>Purchase Price (Est)</th>
+                        <th>{t("portfolio.currentPrice") || "Current Price"}</th>
+                        <th>Yield Cost Ratio</th>
+                        <th>Sector Evaluation</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {analysisResult.current_holdings.map((h, i) => {
+                        const price = h.current_value / h.quantity;
+                        const isProfit = h.unrealized_pnl >= 0;
+                        const estPurchase = price - (h.unrealized_pnl / h.quantity);
+                        
+                        return (
+                          <tr key={i}>
+                            <td style={{ fontWeight: 600 }}>{h.ticker}</td>
+                            <td>${estPurchase.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                            <td>${price.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                            <td>
+                              <span style={{ 
+                                display: "inline-block", 
+                                width: "10px", height: "10px", 
+                                borderRadius: "50%", 
+                                marginRight: "8px",
+                                background: isProfit ? "#7AC142" : "#FF5252" 
+                              }}></span>
+                              {(h.weight * 100).toFixed(2)}%
+                            </td>
+                            <td style={{ color: isProfit ? "#FFA726" : "#FF5252", fontWeight: 500 }}>
+                              {isProfit ? "" : "$ ("}{Math.abs(h.unrealized_pnl).toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{isProfit ? "" : ")"}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
 

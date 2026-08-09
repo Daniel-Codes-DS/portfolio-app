@@ -429,3 +429,94 @@ button.link-button {
     transition: none !important;
   }
 }
+
+/* =========================================
+   Wyn Enterprise Replica Dashboard Styles
+   ========================================= */
+
+.wyn-dashboard {
+  background: #32425B;
+  color: #FFFFFF;
+  min-height: 100vh;
+  padding: 1.5rem;
+}
+
+.wyn-dashboard .card,
+.wyn-dashboard .metric,
+.wyn-dashboard .holdings-table th,
+.wyn-dashboard .holdings-table td {
+  background: #3E516D !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.wyn-dashboard .metric {
+  padding: 1.5rem 1rem !important;
+  border-radius: 4px !important;
+  align-items: flex-start !important;
+}
+
+.wyn-dashboard .metric::before {
+  display: none !important;
+}
+
+.wyn-dashboard .metric-label {
+  color: #A0B2C6 !important;
+  font-size: 0.85rem !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.wyn-dashboard .metric-value {
+  font-size: 1.8rem !important;
+  font-weight: 400 !important;
+}
+
+.wyn-dashboard .dashboard-grid {
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 1200px) {
+  .wyn-dashboard .dashboard-grid.top-row {
+    grid-template-columns: 350px 1fr 350px;
+  }
+  .wyn-dashboard .dashboard-grid.bottom-row {
+    grid-template-columns: 350px 1fr;
+    margin-top: 1rem;
+  }
+}
+
+.wyn-dashboard h4, 
+.wyn-dashboard h3 {
+  color: #FFFFFF !important;
+  text-align: left !important;
+  font-size: 1rem !important;
+  font-weight: 400 !important;
+  margin-bottom: 1rem !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  border-bottom: 1px solid #4D6486;
+  padding-bottom: 0.5rem;
+}
+
+.wyn-dashboard .holdings-table {
+  border: 1px solid #4D6486;
+}
+
+.wyn-dashboard .holdings-table th {
+  background: #3E516D !important;
+  text-align: left;
+  border-bottom: 2px solid #4D6486 !important;
+  text-transform: none;
+  font-size: 0.85rem;
+  padding: 0.75rem;
+}
+
+.wyn-dashboard .holdings-table td {
+  border-bottom: 1px solid #4D6486 !important;
+  padding: 0.75rem;
+  font-size: 0.85rem;
+}
