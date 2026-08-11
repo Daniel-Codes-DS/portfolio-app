@@ -188,9 +188,10 @@ export default function PortfolioDetail({ token, portfolioId, onBack }) {
               <div className="wyn-center-col" style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
                 <PerformanceChart performanceHistory={analysisResult.performance_history || []} />
                 
-                {/* Multi-Timeframe Return Chart (1D, 1W, 1M, 1Q, 1Y, 5Y) */}
+                {/* Multi-Timeframe Return Chart (1D, 5D, 1M, 6M, YTD, 1Y, 5Y, All) */}
                 <TimeframeReturnChart 
                   performanceHistory={analysisResult.performance_history || []} 
+                  totalValue={analysisResult.total_value}
                   annualReturn={analysisResult.annual_return || 0.339}
                 />
               </div>
