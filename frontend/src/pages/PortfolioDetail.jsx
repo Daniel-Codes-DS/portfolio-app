@@ -184,11 +184,8 @@ export default function PortfolioDetail({ token, portfolioId, onBack }) {
                 </div>
               </div>
 
-              {/* Column 2 (Center): Performance Chart + Timeframe Return Chart */}
+              {/* Column 2 (Center): Single Primary Interactive Line Chart (1D, 5D, 1M, 6M, YTD, 1Y, 5Y, All) */}
               <div className="wyn-center-col" style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-                <PerformanceChart performanceHistory={analysisResult.performance_history || []} />
-                
-                {/* Multi-Timeframe Return Chart (1D, 5D, 1M, 6M, YTD, 1Y, 5Y, All) */}
                 <TimeframeReturnChart 
                   performanceHistory={analysisResult.performance_history || []} 
                   totalValue={analysisResult.total_value}
