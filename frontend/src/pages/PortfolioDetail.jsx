@@ -5,6 +5,7 @@ import DisclaimerBanner from "../components/DisclaimerBanner";
 import PerformanceChart from "../components/PerformanceChart";
 import StrengthGauge from "../components/StrengthGauge";
 import AssetProgressBars from "../components/AssetProgressBars";
+import TimeframeReturnChart from "../components/TimeframeReturnChart";
 import PortfolioTreemap from "../components/PortfolioTreemap";
 import RebalancingSimulator from "../components/RebalancingSimulator";
 
@@ -162,7 +163,7 @@ export default function PortfolioDetail({ token, portfolioId, onBack }) {
             {/* ── Wyn Enterprise Layout: Main Grid (3 Columns) ── */}
             <div className="wyn-dashboard-grid">
               
-              {/* Column 1 (RTL Right): Gauge + Asset Progress Bars */}
+              {/* Column 1 (RTL Right): Gauge + Asset Progress Bars + Treemap Sector */}
               <div className="wyn-side-col" style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
                 <StrengthGauge
                   annualReturn={analysisResult.annual_return || 0.339}
@@ -173,19 +174,22 @@ export default function PortfolioDetail({ token, portfolioId, onBack }) {
                 <AssetProgressBars
                   currentHoldings={analysisResult.current_holdings || []}
                 />
-              </div>
 
-              {/* Column 2 (Center): Stock Exchange Performance Chart */}
-              <div className="wyn-center-col" style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-                <PerformanceChart performanceHistory={analysisResult.performance_history || []} />
-                
-                {/* Treemap Sector Visualization */}
+                {/* Treemap Sector Allocation moved here */}
                 <div className="card" style={{ padding: 0 }}>
                   <h3 style={{ padding: "1rem 1rem 0 1rem", margin: 0 }}>Allocation - Sector (Treemap)</h3>
                   <div id="treemap-container">
                     <PortfolioTreemap holdings={analysisResult.current_holdings || []} />
                   </div>
                 </div>
+              </div>
+
+              {/* Column 2 (Center): Performance Chart + Timeframe Return Chart */}
+              <div className="wyn-center-col" style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+                <PerformanceChart performanceHistory={analysisResult.performance_history || []} />
+                
+                {/* Multi-Timeframe Return Chart (1D, 1W, 1M, 1Q, 1Y, 5Y) */}
+                <TimeframeReturnChart performanceHistory={analysisResult.performance_history || []} />
               </div>
 
               {/* Column 3 (RTL Left): Top Value List / Sector Summary Table */}
