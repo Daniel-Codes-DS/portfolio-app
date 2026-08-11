@@ -189,7 +189,10 @@ export default function PortfolioDetail({ token, portfolioId, onBack }) {
                 <PerformanceChart performanceHistory={analysisResult.performance_history || []} />
                 
                 {/* Multi-Timeframe Return Chart (1D, 1W, 1M, 1Q, 1Y, 5Y) */}
-                <TimeframeReturnChart performanceHistory={analysisResult.performance_history || []} />
+                <TimeframeReturnChart 
+                  performanceHistory={analysisResult.performance_history || []} 
+                  annualReturn={analysisResult.annual_return || 0.339}
+                />
               </div>
 
               {/* Column 3 (RTL Left): Top Value List / Sector Summary Table */}
